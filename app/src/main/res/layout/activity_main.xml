@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#000">
+
+    <!-- Câmera de Fundo -->
+    <androidx.camera.view.PreviewView
+        android:id="@+id/viewFinder"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <!-- Mini-Mapa Lateral da Quadra (Desenho Customizado) -->
+    <com.tennis.referee.CourtView
+        android:id="@+id/courtMiniMap"
+        android:layout_width="160dp"
+        android:layout_height="280dp"
+        android:layout_gravity="end|center_vertical"
+        android:layout_marginEnd="16dp"
+        android:background="#44000000" />
+
+    <!-- Placar Sobreposto (Estilo TV) -->
+    <LinearLayout
+        android:id="@+id/scoreboardLayout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top|start"
+        android:layout_marginStart="24dp"
+        android:layout_marginTop="24dp"
+        android:background="#CC000000"
+        android:orientation="vertical"
+        android:padding="8dp">
+
+        <TextView
+            android:id="@+id/textPlayerA"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Jogador A: 0"
+            android:textColor="#FFF"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:id="@+id/textPlayerB"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Jogador B: 0"
+            android:textColor="#FFF"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+    <!-- Modal Inicial de Configuração dos Nomes -->
+    <LinearLayout
+        android:id="@+id/setupPanel"
+        android:layout_width="380dp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:background="#F0FFFFFF"
+        android:orientation="vertical"
+        android:padding="20dp"
+        android:elevation="10dp">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Configuração da Partida"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:textColor="#000"
+            android:layout_marginBottom="12dp"/>
+
+        <EditText
+            android:id="@+id/inputPlayerA"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Nome Jogador A"
+            android:textColor="#000"/>
+
+        <EditText
+            android:id="@+id/inputPlayerB"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Nome Jogador B"
+            android:textColor="#000"
+            android:layout_marginBottom="16dp"/>
+
+        <Button
+            android:id="@+id/btnStartMatch"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Iniciar Juiz Automático"
+            android:backgroundTint="#00AA00"/>
+    </LinearLayout>
+</FrameLayout>

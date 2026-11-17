@@ -105,7 +105,7 @@ class BallAnalyzer(
     private val onBounceDetected: (Float, Float, Boolean) -> Unit
 ) : ImageAnalysis.Analyzer {
 
-    override fun analyze(imageProxy: android.media.ImageProxy) {
+    override fun analyze(imageProxy: androidx.camera.core.ImageProxy) {
         imageProxy.close()
     }
 }

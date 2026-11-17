@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Baixar Código
+    - name: Baixar Codigo
       uses: actions/checkout@v4
 
     - name: Configurar Java 17
@@ -19,8 +19,14 @@ jobs:
         java-version: '17'
         distribution: 'temurin'
 
-    - name: Configurar Android SDK
-      uses: android-actions/setup-android@v3
+    - name: DIAGNOSTICO - Listar arquivos do repositorio
+      run: |
+        echo "===== ARQUIVOS NO REPOSITORIO ====="
+        find . -type f -not -path './.git/*' | sort
+        echo "==================================="
+        for f in settings.gradle build.gradle gradle.properties app/build.gradle app/src/main/AndroidManifest.xml; do
+          if [ -f "$f" ]; then echo "OK: $f"; else echo "FALTANDO: $f"; fi
+        done
 
     - name: Configurar Gradle 8.5
       uses: gradle/actions/setup-gradle@v4
@@ -28,7 +34,13 @@ jobs:
         gradle-version: '8.5'
 
     - name: Compilar APK
-      run: gradle assembleDebug --stacktrace
+      run: gradle assembleDebug --stacktrace 2>&1 | tee build.log; exit ${PIPESTATUS[0]}
+
+    - name: Mostrar resumo do erro
+      if: failure()
+      run: |
+        echo "===== LINHAS DE ERRO ====="
+        grep -iE "error|what went wrong|failed|exception|unresolved|not found" build.log | head -40 || true
 
     - name: Disponibilizar o APK para Download
       uses: actions/upload-artifact@v4

@@ -11,6 +11,7 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.camera.core.CameraSelector
 import androidx.camera.core.ImageAnalysis
+import androidx.camera.core.ImageProxy
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.view.PreviewView
@@ -105,7 +106,7 @@ class BallAnalyzer(
     private val onBounceDetected: (Float, Float, Boolean) -> Unit
 ) : ImageAnalysis.Analyzer {
 
-    override fun analyze(imageProxy: androidx.camera.core.ImageProxy) {
+    override fun analyze(imageProxy: ImageProxy) {
         imageProxy.close()
     }
 }

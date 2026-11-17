@@ -8,7 +8,6 @@ class ScoreEngine(var playerA: String, var playerB: String) {
     fun pointTo(isPlayerA: Boolean): String {
         if (isPlayerA) scoreA++ else scoreB++
 
-        // Lógica simplificada de Game
         if (scoreA >= 4 && scoreA - scoreB >= 2) {
             scoreA = 0
             scoreB = 0

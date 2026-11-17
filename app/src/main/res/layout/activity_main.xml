@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#000">
@@ -10,44 +11,147 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
-    <!-- Mini-Mapa Lateral da Quadra (Desenho Customizado) -->
-    <com.tennis.referee.CourtView
-        android:id="@+id/courtMiniMap"
-        android:layout_width="160dp"
-        android:layout_height="280dp"
-        android:layout_gravity="end|center_vertical"
-        android:layout_marginEnd="16dp"
-        android:background="#44000000" />
-
-    <!-- Placar Sobreposto (Estilo TV) -->
+    <!-- PLACAR (Estilo Swing Vision - Canto Superior Esquerdo) -->
     <LinearLayout
         android:id="@+id/scoreboardLayout"
+        android:layout_width="260dp"
+        android:layout_height="wrap_content"
+        android:layout_margin="16dp"
+        android:background="#99000000"
+        android:orientation="vertical"
+        android:padding="8dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            <TextView
+                android:id="@+id/tvNameA"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:text="Jogador A"
+                android:textColor="#FFF"
+                android:textSize="18sp" />
+            <TextView
+                android:id="@+id/tvSetA"
+                android:layout_width="40dp"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="0"
+                android:textColor="#FFF"
+                android:textSize="18sp" />
+            <TextView
+                android:id="@+id/tvScoreA"
+                android:layout_width="40dp"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="0"
+                android:textColor="#FFF"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <View android:layout_width="match_parent" android:layout_height="1dp" android:background="#555" android:layout_marginVertical="4dp"/>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+            <TextView
+                android:id="@+id/tvNameB"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:text="Jogador B"
+                android:textColor="#FFF"
+                android:textSize="18sp" />
+            <TextView
+                android:id="@+id/tvSetB"
+                android:layout_width="40dp"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="0"
+                android:textColor="#FFF"
+                android:textSize="18sp" />
+            <TextView
+                android:id="@+id/tvScoreB"
+                android:layout_width="40dp"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:text="0"
+                android:textColor="#FFF"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- MINI MAPA (Canto Superior Direito) -->
+    <com.tennis.referee.CourtView
+        android:id="@+id/courtMiniMap"
+        android:layout_width="120dp"
+        android:layout_height="220dp"
+        android:layout_margin="16dp"
+        android:background="#99000000"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <!-- BOTÃO DE CONFIGURAÇÕES (Engrenagem) -->
+    <ImageButton
+        android:id="@+id/btnSettings"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="16dp"
+        android:background="#99000000"
+        android:src="@android:drawable/ic_menu_manage"
+        app:tint="#FFF"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/courtMiniMap" />
+
+    <!-- BOTÕES DE GRAVAÇÃO (Parte Inferior) -->
+    <LinearLayout
+        android:id="@+id/controlsLayout"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="top|start"
-        android:layout_marginStart="24dp"
-        android:layout_marginTop="24dp"
-        android:background="#CC000000"
-        android:orientation="vertical"
-        android:padding="8dp">
+        android:layout_marginBottom="24dp"
+        android:background="#99000000"
+        android:orientation="horizontal"
+        android:padding="12dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent">
 
-        <TextView
-            android:id="@+id/textPlayerA"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Jogador A: 0"
+        <Button
+            android:id="@+id/btnRecord"
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:layout_marginEnd="16dp"
+            android:backgroundTint="#FF0000"
+            android:text="REC"
             android:textColor="#FFF"
-            android:textSize="18sp"
             android:textStyle="bold" />
 
-        <TextView
-            android:id="@+id/textPlayerB"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Jogador B: 0"
+        <Button
+            android:id="@+id/btnPause"
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:layout_marginEnd="16dp"
+            android:backgroundTint="#FFA500"
+            android:text="PAUSE"
             android:textColor="#FFF"
-            android:textSize="18sp"
-            android:textStyle="bold" />
+            android:enabled="false" />
+
+        <Button
+            android:id="@+id/btnStop"
+            android:layout_width="64dp"
+            android:layout_height="64dp"
+            android:backgroundTint="#FFFFFF"
+            android:text="STOP"
+            android:textColor="#000"
+            android:enabled="false" />
     </LinearLayout>
 
     <!-- Modal Inicial de Configuração dos Nomes -->
@@ -55,11 +159,13 @@
         android:id="@+id/setupPanel"
         android:layout_width="380dp"
         android:layout_height="wrap_content"
-        android:layout_gravity="center"
         android:background="#F0FFFFFF"
         android:orientation="vertical"
         android:padding="20dp"
-        android:elevation="10dp">
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
 
         <TextView
             android:layout_width="match_parent"
@@ -89,7 +195,7 @@
             android:id="@+id/btnStartMatch"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Iniciar Juiz Automático"
+            android:text="Iniciar Câmera"
             android:backgroundTint="#00AA00"/>
     </LinearLayout>
-</FrameLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>

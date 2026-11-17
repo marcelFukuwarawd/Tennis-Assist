@@ -4,12 +4,12 @@ import android.Manifest
 import android.app.AlertDialog
 import android.content.ContentValues
 import android.content.pm.PackageManager
-import android.os.Build
 import android.os.Bundle
 import android.provider.MediaStore
 import android.view.View
 import android.widget.Button
 import android.widget.EditText
+import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
@@ -20,7 +20,6 @@ import androidx.camera.core.ImageProxy
 import androidx.camera.core.Preview
 import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.camera.video.MediaStoreOutputOptions
-import androidx.camera.video.PendingRecording
 import androidx.camera.video.Recorder
 import androidx.camera.video.Recording
 import androidx.camera.video.VideoCapture
@@ -60,7 +59,7 @@ class MainActivity : AppCompatActivity() {
         val btnRecord = findViewById<Button>(R.id.btnRecord)
         val btnPause = findViewById<Button>(R.id.btnPause)
         val btnStop = findViewById<Button>(R.id.btnStop)
-        val btnSettings = findViewById<android.widget.ImageButton>(R.id.btnSettings)
+        val btnSettings = findViewById<ImageButton>(R.id.btnSettings)
 
         cameraExecutor = Executors.newSingleThreadExecutor()
 
@@ -95,9 +94,6 @@ class MainActivity : AppCompatActivity() {
         btnPause.setOnClickListener {
             if (recording != null) {
                 if (btnPause.text == "RESUME") {
-                    // A API do CameraX não tem "resume" direto no objeto Recording, 
-                    // na prática, pausar e retomar exige parar e iniciar um novo arquivo.
-                    // Para simplificar, faremos ele parar e gravar outro trecho.
                     stopRecording()
                     startRecording()
                     btnPause.text = "PAUSE"
@@ -132,7 +128,6 @@ class MainActivity : AppCompatActivity() {
                 it.setSurfaceProvider(viewFinder.surfaceProvider)
             }
 
-            // Configurando Gravação de Vídeo
             val recorder = Recorder.Builder().build()
             videoCapture = VideoCapture.withOutput(recorder)
 
@@ -167,16 +162,13 @@ class MainActivity : AppCompatActivity() {
             .setContentValues(contentValues)
             .build()
 
-        val audioConfig = androidx.camera.video.AudioConfig.createAudioConfig(
-            getString(androidx.camera.video.R.string.camera_audio_channel_name),
-            false
-        )
-
+        // CORREÇÃO AQUI: usando withAudioEnabled() em vez de AudioConfig
         val pendingRecording = videoCapture.output
             .prepareRecording(this, mediaStoreOutput)
-            .withAudio(audioConfig)
+            .withAudioEnabled()
 
-        recording = pendingRecording.start(ContextCompat.getMainExecutor(this)) { event ->
+        // CORREÇÃO AQUI: tipagem explícita do 'event'
+        recording = pendingRecording.start(ContextCompat.getMainExecutor(this)) { event: VideoRecordEvent ->
             if (event is VideoRecordEvent.Start) {
                 Toast.makeText(this, "Gravação iniciada!", Toast.LENGTH_SHORT).show()
             } else if (event is VideoRecordEvent.Finalize) {

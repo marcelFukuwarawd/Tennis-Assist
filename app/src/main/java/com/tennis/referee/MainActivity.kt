@@ -95,7 +95,6 @@ class MainActivity : AppCompatActivity() {
         if (!allPermissionsGranted()) ActivityCompat.requestPermissions(this, REQUIRED_PERMISSIONS, 10)
     }
 
-    // --- LÓGICA DE CALIBRAÇÃO DA QUADRA ---
     private fun setupTouchCalibration() {
         touchOverlay.setOnTouchListener { _, event ->
             if (isCalibrating && event.action == MotionEvent.ACTION_DOWN) {
@@ -160,7 +159,6 @@ class MainActivity : AppCompatActivity() {
         builder.show()
     }
 
-    // --- INICIALIZAÇÃO DA CÂMERA E ANÁLISE ---
     private fun startCamera() {
         val prefs = getSharedPreferences("tennis_prefs", Context.MODE_PRIVATE)
         currentFps = prefs.getInt("camera_fps", 60)
@@ -174,7 +172,6 @@ class MainActivity : AppCompatActivity() {
                 it.setSurfaceProvider(viewFinder.surfaceProvider)
             }
 
-            // Força FPS via Camera2Interop
             val captureBuilder = ImageAnalysis.Builder()
                 .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
             
@@ -186,8 +183,7 @@ class MainActivity : AppCompatActivity() {
                     runOnUiThread {
                         courtView.addBounce(x, y, isIn)
                         if (isIn) {
-                            val result = scoreEngine.pointTo(true)
-                            updateScoreUI(result)
+                            scoreEngine.pointTo(true)
                         }
                     }
                 })
@@ -200,10 +196,6 @@ class MainActivity : AppCompatActivity() {
             cameraProvider.unbindAll()
             cameraProvider.bindToLifecycle(this, cameraSelector, preview, imageAnalysis, videoCapture)
         }, ContextCompat.getMainExecutor(this))
-    }
-
-    private fun updateScoreUI(result: String) {
-        // Aqui você pode atualizar os TextViews do placar
     }
 
     private fun startRecording() {

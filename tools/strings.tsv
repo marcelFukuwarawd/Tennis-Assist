@@ -411,3 +411,9 @@ zone_serve_wide	Serve wide	Saque aberto
 zone_deep_cross	Deep cross-court	Cruzada profunda
 zone_deep_line	Deep down the line	Paralela profunda
 zone_depth	Depth (last third)	Profundidade (último terço)
+analysis_degraded	Note: an AI model could not run on this phone, so part of the analysis used classical image processing only (results may be less complete).	Observação: um modelo de IA não pôde rodar neste celular, então parte da análise usou apenas processamento de imagem clássico (resultados podem ser menos completos).
+saved	Saved	Salvo
+setting_saved	Setting saved	Configuração salva
+deleted	Deleted	Excluído
+marker_added	Marker added	Marcador adicionado
+point_added	Point added	Ponto adicionado

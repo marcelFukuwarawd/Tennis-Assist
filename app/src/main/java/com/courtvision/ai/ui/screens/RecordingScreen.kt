@@ -1,5 +1,6 @@
 package com.courtvision.ai.ui.screens
 
+import com.courtvision.ai.util.Feedback
 import android.Manifest
 import android.app.Activity
 import android.content.pm.ActivityInfo
@@ -421,6 +422,7 @@ fun RecordingScreen(nav: NavHostController, sessionId: Long) {
                                 val data = CalibrationData(corners.map { it.x }, corners.map { it.y }, auto = false)
                                 app.db.sessions().setCalibration(sessionId, AppJson.encodeToString(CalibrationData.serializer(), data))
                                 analyzer?.calibration = data
+                                Feedback.show(context)
                                 calibFrame = null
                             }
                         }) { Text(stringResource(R.string.save)) }

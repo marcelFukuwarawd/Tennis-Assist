@@ -1,5 +1,6 @@
 package com.courtvision.ai.ui.session
 
+import com.courtvision.ai.util.Feedback
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -143,7 +144,7 @@ fun VideoTab(vm: SessionViewModel) {
                     Icon(Icons.Filled.SlowMotionVideo, stringResource(R.string.instant_replay))
                 }
                 IconButton(onClick = { zoom = !zoom }) { Icon(Icons.Filled.ZoomIn, stringResource(R.string.zoom_bounce), tint = if (zoom) Lime else MaterialTheme.colorScheme.onSurface) }
-                IconButton(onClick = { scope.launch { vm.app.db.edits().insertMarker(MarkerEntity(sessionId = session.id, timeMs = pos, label = formatDuration(pos))) } }) {
+                IconButton(onClick = { scope.launch { vm.app.db.edits().insertMarker(MarkerEntity(sessionId = session.id, timeMs = pos, label = formatDuration(pos))); Feedback.show(context, R.string.marker_added) } }) {
                     Icon(Icons.Filled.BookmarkAdd, stringResource(R.string.add_marker))
                 }
                 Text(formatDuration(pos), Modifier.padding(start = 8.dp))
@@ -217,6 +218,7 @@ private fun AnalysisCard(vm: SessionViewModel, pos: Long) {
             }
             AnalysisState.DONE -> {
                 Text(stringResource(R.string.analysis_done), color = InGreen)
+                if (session.analysisError == "degraded") Text(stringResource(R.string.analysis_degraded), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     OutlinedButton(onClick = { scope.launch { AnalysisScheduler.reprocessFrom(context, session.id, pos) } }) { Text(stringResource(R.string.reprocess_from_here)) }
                     OutlinedButton(onClick = { scope.launch { AnalysisScheduler.reprocessFrom(context, session.id, 0) } }) { Text(stringResource(R.string.reprocess_all)) }

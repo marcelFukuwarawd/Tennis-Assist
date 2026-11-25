@@ -1,5 +1,6 @@
 package com.courtvision.ai.ui.session
 
+import com.courtvision.ai.util.Feedback
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -78,14 +79,14 @@ fun MoreTab(vm: SessionViewModel, nav: NavHostController) {
             SectionCard(stringResource(R.string.session_info)) {
                 Text(stringResource(R.string.mode))
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                    SessionMode.entries.forEach { m -> FilterChip(session.mode == m, { vm.update(session.copy(mode = m)) }, { Text(modeLabel(m)) }) }
+                    SessionMode.entries.forEach { m -> FilterChip(session.mode == m, { vm.update(session.copy(mode = m)); Feedback.show(context) }, { Text(modeLabel(m)) }) }
                 }
                 OutlinedTextField(a, { a = it }, label = { Text(stringResource(R.string.player_a)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
                 OutlinedTextField(b, { b = it }, label = { Text(stringResource(R.string.player_b)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
-                ToggleRow(stringResource(R.string.left_handed), !session.rightHandedA) { vm.update(session.copy(rightHandedA = !it)) }
-                ToggleRow(stringResource(R.string.first_server) + ": " + (if (session.firstServerA) a.ifBlank { "A" } else b.ifBlank { "B" }), session.firstServerA) { vm.update(session.copy(firstServerA = it)) }
+                ToggleRow(stringResource(R.string.left_handed), !session.rightHandedA) { vm.update(session.copy(rightHandedA = !it)); Feedback.show(context) }
+                ToggleRow(stringResource(R.string.first_server) + ": " + (if (session.firstServerA) a.ifBlank { "A" } else b.ifBlank { "B" }), session.firstServerA) { vm.update(session.copy(firstServerA = it)); Feedback.show(context) }
                 OutlinedTextField(notes, { notes = it }, label = { Text(stringResource(R.string.notes)) }, modifier = Modifier.fillMaxWidth(), minLines = 3)
-                Button(onClick = { vm.update(session.copy(notes = notes, playerA = a.trim(), playerB = b.trim())) }) { Text(stringResource(R.string.save)) }
+                Button(onClick = { vm.update(session.copy(notes = notes, playerA = a.trim(), playerB = b.trim())); Feedback.show(context) }) { Text(stringResource(R.string.save)) }
             }
         }
         if (playerIds.size > 1) item {
@@ -103,7 +104,7 @@ fun MoreTab(vm: SessionViewModel, nav: NavHostController) {
                                 scope.launch {
                                     vm.app.db.analysis().relabelPlayer(session.id, from, into)
                                     vm.app.db.analysis().shots(session.id).filter { it.playerId == from }.forEach { vm.app.db.analysis().updateShot(it.copy(playerId = into, edited = true)) }
-                                    playerIds = vm.app.db.analysis().players(session.id).groupingBy { it.playerId }.eachCount(); mergeFrom = null
+                                    playerIds = vm.app.db.analysis().players(session.id).groupingBy { it.playerId }.eachCount(); mergeFrom = null; Feedback.show(context)
                                 }
                             }) { Text("#$into") }
                         }

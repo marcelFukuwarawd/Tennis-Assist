@@ -413,4 +413,10 @@
     <string name="zone_deep_cross">Deep cross-court</string>
     <string name="zone_deep_line">Deep down the line</string>
     <string name="zone_depth">Depth (last third)</string>
+    <string name="analysis_degraded">Note: an AI model could not run on this phone, so part of the analysis used classical image processing only (results may be less complete).</string>
+    <string name="saved">Saved</string>
+    <string name="setting_saved">Setting saved</string>
+    <string name="deleted">Deleted</string>
+    <string name="marker_added">Marker added</string>
+    <string name="point_added">Point added</string>
 </resources>

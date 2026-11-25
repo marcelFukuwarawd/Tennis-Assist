@@ -1,5 +1,6 @@
 package com.courtvision.ai.ui.session
 
+import com.courtvision.ai.util.Feedback
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -45,12 +46,13 @@ class SessionViewModel(val app: CourtVisionApp, val id: Long) : ViewModel() {
 
     private fun refreshFlags() { _canUndo.value = undoStack.isNotEmpty(); _canRedo.value = redoStack.isNotEmpty() }
 
-    fun edit(transform: (List<PointEntity>) -> List<PointEntity>) = viewModelScope.launch {
+    fun edit(message: Int = com.courtvision.ai.R.string.saved, transform: (List<PointEntity>) -> List<PointEntity>) = viewModelScope.launch {
         val cur = db.points().forSession(id)
         val next = transform(cur)
         undoStack.addLast(cur); if (undoStack.size > 200) undoStack.removeFirst()
         redoStack.clear(); refreshFlags()
         db.points().replaceAll(id, next)
+        Feedback.show(app, message)
     }
 
     fun undo() = viewModelScope.launch {

@@ -1,5 +1,6 @@
 package com.courtvision.ai.ui.screens
 
+import com.courtvision.ai.util.Feedback
 import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -51,7 +52,7 @@ fun SettingsScreen(nav: NavHostController) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val st by app.settings.settings.collectAsState(initial = AppSettings())
-    fun set(f: (AppSettings) -> AppSettings) = scope.launch { app.settings.update(f) }
+    fun set(notify: Boolean = true, f: (AppSettings) -> AppSettings) = scope.launch { app.settings.update(f); if (notify) Feedback.show(context, R.string.setting_saved) }
     var backupVideos by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf<String?>(null) }
     val exporter = remember { DataExporter(context) }
@@ -83,7 +84,7 @@ fun SettingsScreen(nav: NavHostController) {
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     listOf("pt-BR" to "Português (Brasil)", "en" to "English", "" to stringResource(R.string.theme_system)).forEach { (tag, l) ->
                         val current = AppCompatDelegate.getApplicationLocales().toLanguageTags()
-                        FilterChip(current == tag, { AppCompatDelegate.setApplicationLocales(if (tag.isEmpty()) LocaleListCompat.getEmptyLocaleList() else LocaleListCompat.forLanguageTags(tag)) }, { Text(l) })
+                        FilterChip(current == tag, { Feedback.show(context, R.string.setting_saved); AppCompatDelegate.setApplicationLocales(if (tag.isEmpty()) LocaleListCompat.getEmptyLocaleList() else LocaleListCompat.forLanguageTags(tag)) }, { Text(l) })
                     }
                 }
             }
@@ -100,13 +101,13 @@ fun SettingsScreen(nav: NavHostController) {
                 }
                 ToggleRow(stringResource(R.string.auto_scoring), st.autoScoring) { v -> set { it.copy(autoScoring = v) } }
                 Text(stringResource(R.string.review_threshold, formatPct(st.reviewThreshold)))
-                Slider(st.reviewThreshold.toFloat(), { v -> set { it.copy(reviewThreshold = v.toDouble()) } }, valueRange = 0.5f..0.99f)
+                Slider(st.reviewThreshold.toFloat(), { v -> set(false) { it.copy(reviewThreshold = v.toDouble()) } }, valueRange = 0.5f..0.99f, onValueChangeFinished = { Feedback.show(context, R.string.setting_saved) })
             }
         }
         item {
             SectionCard(stringResource(R.string.line_calling)) {
                 Text(stringResource(R.string.call_threshold, formatPct(st.callThreshold)))
-                Slider(st.callThreshold.toFloat(), { v -> set { it.copy(callThreshold = v.toDouble()) } }, valueRange = 0.80f..0.995f)
+                Slider(st.callThreshold.toFloat(), { v -> set(false) { it.copy(callThreshold = v.toDouble()) } }, valueRange = 0.80f..0.995f, onValueChangeFinished = { Feedback.show(context, R.string.setting_saved) })
                 Text(stringResource(R.string.call_threshold_info), style = MaterialTheme.typography.labelSmall)
                 ToggleRow(stringResource(R.string.voice_calls), st.voiceCalls) { v -> set { it.copy(voiceCalls = v) } }
                 ToggleRow(stringResource(R.string.voice_score), st.voiceScore) { v -> set { it.copy(voiceScore = v) } }

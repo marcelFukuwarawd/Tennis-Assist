@@ -95,6 +95,8 @@ class AnalysisPipeline(
             if (isStopped()) return
             progress("events", 0.85f)
             eventsPass(db.sessions().get(sessionId)!!, cal.first, cal.second, ml)
+            // tell the user when a neural model had to be switched off (classical vision was used)
+            if (ml.degraded) db.sessions().setAnalysis(sessionId, com.courtvision.ai.data.AnalysisState.DONE, 1f, "done", "degraded")
         } finally {
             ml.close()
         }
@@ -309,7 +311,7 @@ class AnalysisPipeline(
                             val next = rally.firstOrNull { it.timeMs > e.timeMs }
                             val nextBounce = next?.takeIf { it.type == BallEventType.BOUNCE }
                             val speed = if (nextBounce?.court != null && lastHitCourt != null) SpeedEstimator.averageKmh(lastHitCourt!!, e.timeMs, nextBounce.court!!, nextBounce.timeMs) else null
-                            val poses = if (cfg.usePose && ml.available) poseAt(e.timeMs) else emptyList()
+                            val poses = if (cfg.usePose) runCatching { poseAt(e.timeMs) }.getOrDefault(emptyList()) else emptyList()
                             val pose = poses.minByOrNull { it.box.centre.distanceTo(e.image) }?.takeIf { it.box.centre.distanceTo(e.image) < it.box.height * 1.5 }
                             val prevBounceOnMySide = rally.lastOrNull { it.timeMs < e.timeMs && it.type == BallEventType.BOUNCE }?.court?.let { lastHitNear != null && court.isNearHalf(it) == lastHitNear }
                             val features = ShotFeatures(

@@ -1,5 +1,6 @@
 package com.courtvision.ai.ui.screens
 
+import com.courtvision.ai.util.Feedback
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -55,6 +56,7 @@ private const val WEEK = 7L * 24 * 3600 * 1000
 fun StatsScreen(nav: NavHostController) {
     val app = app()
     val scope = rememberCoroutineScope()
+    val context = androidx.compose.ui.platform.LocalContext.current
     val sessions by app.db.sessions().observeAll().collectAsState(initial = emptyList())
     val attempts by app.db.training().observeAllAttempts().collectAsState(initial = emptyList())
     val goals by app.db.training().observeGoals().collectAsState(initial = emptyList())
@@ -118,7 +120,7 @@ fun StatsScreen(nav: NavHostController) {
                     }
                     Text(goalLabel(g.metric) + ": " + formatNum(current) + " / " + formatNum(g.target), fontWeight = FontWeight.SemiBold)
                     LinearProgressIndicator(progress = { ((current ?: 0.0) / g.target).toFloat().coerceIn(0f, 1f) }, Modifier.fillMaxWidth().padding(vertical = 4.dp))
-                    TextButton(onClick = { scope.launch { app.db.training().updateGoal(g.copy(active = false)) } }) { Text(stringResource(R.string.remove_goal)) }
+                    TextButton(onClick = { scope.launch { app.db.training().updateGoal(g.copy(active = false)); Feedback.show(context, R.string.deleted) } }) { Text(stringResource(R.string.remove_goal)) }
                 }
                 var metric by remember { mutableStateOf("SESSIONS") }
                 var target by remember { mutableFloatStateOf(3f) }
@@ -129,7 +131,7 @@ fun StatsScreen(nav: NavHostController) {
                 val range = when (metric) { "SESSIONS" -> 1f..14f; "SHOTS" -> 50f..3000f; else -> 10f..100f }
                 Text(formatNum(target.toDouble()))
                 Slider(target, { target = it }, valueRange = range)
-                Button(onClick = { scope.launch { app.db.training().insertGoal(GoalEntity(metric = metric, target = target.toDouble(), createdAt = now)) } }) { Text(stringResource(R.string.add_goal)) }
+                Button(onClick = { scope.launch { app.db.training().insertGoal(GoalEntity(metric = metric, target = target.toDouble(), createdAt = now)); Feedback.show(context) } }) { Text(stringResource(R.string.add_goal)) }
             }
         }
     }

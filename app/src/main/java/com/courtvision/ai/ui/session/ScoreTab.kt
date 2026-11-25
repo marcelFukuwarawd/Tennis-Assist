@@ -1,5 +1,6 @@
 package com.courtvision.ai.ui.session
 
+import com.courtvision.ai.util.Feedback
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -79,8 +80,8 @@ fun ScoreTab(vm: SessionViewModel) {
                     board.winner?.let { Text(stringResource(R.string.winner_is, if (it == Side.A) session.nameA() else session.nameB()), color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold) }
                 }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(top = 8.dp)) {
-                    Button(onClick = { vm.edit { it + PointEntity(sessionId = session.id, order = it.size, winnerA = true) } }, Modifier.weight(1f).height(56.dp)) { Text("+ " + session.nameA()) }
-                    Button(onClick = { vm.edit { it + PointEntity(sessionId = session.id, order = it.size, winnerA = false) } }, Modifier.weight(1f).height(56.dp)) { Text("+ " + session.nameB()) }
+                    Button(onClick = { vm.edit(R.string.point_added) { it + PointEntity(sessionId = session.id, order = it.size, winnerA = true) } }, Modifier.weight(1f).height(56.dp)) { Text("+ " + session.nameA()) }
+                    Button(onClick = { vm.edit(R.string.point_added) { it + PointEntity(sessionId = session.id, order = it.size, winnerA = false) } }, Modifier.weight(1f).height(56.dp)) { Text("+ " + session.nameB()) }
                     IconButton(onClick = { vm.undo() }, enabled = canUndo) { Icon(Icons.AutoMirrored.Filled.Undo, stringResource(R.string.undo)) }
                     IconButton(onClick = { vm.redo() }, enabled = canRedo) { Icon(Icons.AutoMirrored.Filled.Redo, stringResource(R.string.redo)) }
                 }
@@ -139,7 +140,7 @@ fun ScoreTab(vm: SessionViewModel) {
                     FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                         if (p.needsReview) TextButton(onClick = { vm.edit { l -> l.toMutableList().also { it[idx] = p.copy(needsReview = false, auto = false) } } }) { Text(stringResource(R.string.mark_reviewed)) }
                         TextButton(onClick = { vm.edit { l -> l.toMutableList().also { it.add(idx, PointEntity(sessionId = session.id, order = idx, winnerA = true, startMs = p.startMs)) } } }) { Text(stringResource(R.string.insert_before)) }
-                        TextButton(onClick = { vm.edit { l -> l.toMutableList().also { it.removeAt(idx) } }; editing = null }) { Text(stringResource(R.string.delete)) }
+                        TextButton(onClick = { vm.edit(R.string.deleted) { l -> l.toMutableList().also { it.removeAt(idx) } }; editing = null }) { Text(stringResource(R.string.delete)) }
                         p.startMs?.let { st -> TextButton(onClick = { vm.requestSeek(st); editing = null }) { Text(stringResource(R.string.watch) + " " + formatDuration(st)) } }
                     }
                 }

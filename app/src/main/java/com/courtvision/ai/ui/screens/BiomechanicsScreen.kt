@@ -102,7 +102,7 @@ fun BiomechanicsScreen(nav: NavHostController, id: Long, t: Long) {
         busy = true; poseError = false
         withContext(Dispatchers.Default) {
             val m = models.value
-            if (!m.available) { poseError = true; return@withContext }
+            if (!m.poseAvailable) { poseError = true; return@withContext }
             a.bitmap?.let { bmp -> a = FrameState(bmp, m.poses(bmp).maxByOrNull { it.box.area }) }
             b.bitmap?.let { bmp -> b = FrameState(bmp, m.poses(bmp).maxByOrNull { it.box.area }) }
         }

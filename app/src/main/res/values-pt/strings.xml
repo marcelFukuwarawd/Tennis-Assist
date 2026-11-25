@@ -412,4 +412,10 @@
     <string name="zone_deep_cross">Cruzada profunda</string>
     <string name="zone_deep_line">Paralela profunda</string>
     <string name="zone_depth">Profundidade (último terço)</string>
+    <string name="analysis_degraded">Observação: um modelo de IA não pôde rodar neste celular, então parte da análise usou apenas processamento de imagem clássico (resultados podem ser menos completos).</string>
+    <string name="saved">Salvo</string>
+    <string name="setting_saved">Configuração salva</string>
+    <string name="deleted">Excluído</string>
+    <string name="marker_added">Marcador adicionado</string>
+    <string name="point_added">Ponto adicionado</string>
 </resources>

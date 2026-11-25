@@ -1,5 +1,6 @@
 package com.courtvision.ai.ui.screens
 
+import com.courtvision.ai.util.Feedback
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -48,6 +49,7 @@ import kotlinx.coroutines.launch
 fun ZonesScreen(nav: NavHostController) {
     val app = app()
     val scope = rememberCoroutineScope()
+    val context = androidx.compose.ui.platform.LocalContext.current
     val zones by app.db.training().observeZones().collectAsState(initial = emptyList())
     var pickle by remember { mutableStateOf(false) }
     var firstCorner by remember { mutableStateOf<Vec2?>(null) }
@@ -55,6 +57,7 @@ fun ZonesScreen(nav: NavHostController) {
     val mine = zones.filter { it.pickleball == pickle }
     fun add(name: String, a: Vec2, b: Vec2) = scope.launch {
         app.db.training().insertZone(TargetZoneEntity(name = name, pickleball = pickle, minX = minOf(a.x, b.x), minY = minOf(a.y, b.y), maxX = maxOf(a.x, b.x), maxY = maxOf(a.y, b.y)))
+        Feedback.show(context)
     }
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         item {
@@ -95,7 +98,7 @@ fun ZonesScreen(nav: NavHostController) {
             Row(Modifier.fillMaxWidth().clickable { }.padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {
                 Text(z.name, Modifier.weight(1f))
                 Text("%.1f×%.1f m".format(z.maxX - z.minX, z.maxY - z.minY), style = MaterialTheme.typography.labelMedium)
-                IconButton(onClick = { scope.launch { app.db.training().deleteZone(z) } }) { Icon(Icons.Filled.Delete, stringResource(R.string.delete)) }
+                IconButton(onClick = { scope.launch { app.db.training().deleteZone(z); Feedback.show(context, R.string.deleted) } }) { Icon(Icons.Filled.Delete, stringResource(R.string.delete)) }
             }
         }
     }

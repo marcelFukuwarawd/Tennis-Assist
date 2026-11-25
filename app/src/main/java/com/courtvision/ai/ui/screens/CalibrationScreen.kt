@@ -1,5 +1,6 @@
 package com.courtvision.ai.ui.screens
 
+import com.courtvision.ai.util.Feedback
 import android.graphics.Bitmap
 import android.media.MediaMetadataRetriever
 import android.net.Uri
@@ -114,6 +115,7 @@ fun CalibrationScreen(nav: NavHostController, id: Long) {
                 scope.launch {
                     val data = CalibrationData(c.map { it.x }, c.map { it.y }, auto = false, lineSupport = support)
                     app.db.sessions().setCalibration(id, AppJson.encodeToString(CalibrationData.serializer(), data))
+                    Feedback.show(context)
                     // calibration changed: analysis must be redone from the start
                     AnalysisScheduler.reprocessFrom(context, id, 0)
                     nav.popBackStack()

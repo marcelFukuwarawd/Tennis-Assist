@@ -1,5 +1,6 @@
 package com.courtvision.ai.ui.screens
 
+import com.courtvision.ai.util.Feedback
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -49,6 +50,7 @@ private enum class Filter { ALL, MATCHES, TRAINING, TENNIS, PICKLEBALL, FAVORITE
 fun MatchesScreen(nav: NavHostController) {
     val app = app()
     val scope = rememberCoroutineScope()
+    val context = androidx.compose.ui.platform.LocalContext.current
     val sessions by app.db.sessions().observeAll().collectAsState(initial = emptyList())
     var query by remember { mutableStateOf("") }
     var sort by remember { mutableStateOf(Sort.DATE) }
@@ -95,7 +97,7 @@ fun MatchesScreen(nav: NavHostController) {
             items(list, key = { it.id }) { s ->
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f)) { SessionRow(s) { nav.navigate(Routes.session(s.id)) } }
-                    IconButton(onClick = { scope.launch { app.db.sessions().update(s.copy(favorite = !s.favorite)) } }) {
+                    IconButton(onClick = { scope.launch { app.db.sessions().update(s.copy(favorite = !s.favorite)); Feedback.show(context) } }) {
                         Icon(if (s.favorite) Icons.Filled.Star else Icons.Filled.StarBorder, stringResource(R.string.favorite), tint = MaterialTheme.colorScheme.primary)
                     }
                     IconButton(onClick = { renaming = s }) { Icon(Icons.Filled.Edit, stringResource(R.string.rename)) }
@@ -111,7 +113,7 @@ fun MatchesScreen(nav: NavHostController) {
             onDismissRequest = { renaming = null },
             title = { Text(stringResource(R.string.rename)) },
             text = { OutlinedTextField(text, { text = it }, singleLine = true) },
-            confirmButton = { TextButton(onClick = { scope.launch { app.db.sessions().update(s.copy(title = text.ifBlank { s.title })) }; renaming = null }) { Text(stringResource(R.string.save)) } },
+            confirmButton = { TextButton(onClick = { scope.launch { app.db.sessions().update(s.copy(title = text.ifBlank { s.title })); Feedback.show(context) }; renaming = null }) { Text(stringResource(R.string.save)) } },
             dismissButton = { TextButton(onClick = { renaming = null }) { Text(stringResource(R.string.cancel)) } },
         )
     }
@@ -120,7 +122,7 @@ fun MatchesScreen(nav: NavHostController) {
             onDismissRequest = { deleting = null },
             title = { Text(stringResource(R.string.delete_session_q), fontWeight = FontWeight.Bold) },
             text = { Text(stringResource(if (s.imported) R.string.delete_imported_info else R.string.delete_info)) },
-            confirmButton = { TextButton(onClick = { scope.launch { app.repo.deleteSession(s) }; deleting = null }) { Text(stringResource(R.string.delete)) } },
+            confirmButton = { TextButton(onClick = { scope.launch { app.repo.deleteSession(s); Feedback.show(context, R.string.deleted) }; deleting = null }) { Text(stringResource(R.string.delete)) } },
             dismissButton = { TextButton(onClick = { deleting = null }) { Text(stringResource(R.string.cancel)) } },
         )
     }

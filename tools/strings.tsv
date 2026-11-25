@@ -153,3 +153,143 @@ adv_zoom	Zoom in or move closer	Aumente o zoom ou aproxime-se
 adv_low_light	Low light	Iluminação insuficiente
 adv_raise	Raise the camera	Eleve a câmera
 adv_calibrate	Calibrate the court (frame icon)	Calibre a quadra (ícone de moldura)
+search	Search sessions, players, notes	Buscar sessões, jogadores, observações
+filter_all	All	Todas
+filter_matches	Matches	Partidas
+filter_training	Training	Treinos
+filter_tennis	Tennis	Tênis
+filter_pickleball	Pickleball	Pickleball
+filter_favorites	Favorites	Favoritas
+sort_date	Date	Data
+sort_name	Name	Nome
+sort_mode	Mode	Modalidade
+sort_player	Player	Jogador
+favorite	Favorite	Favorito
+rename	Rename	Renomear
+delete	Delete	Excluir
+delete_session_q	Delete this session?	Excluir esta sessão?
+delete_info	The recorded video and all analysis data will be removed from this phone.	O vídeo gravado e todos os dados de análise serão removidos deste celular.
+delete_imported_info	The analysis data will be removed. The original imported video file is kept.	Os dados de análise serão removidos. O arquivo de vídeo original importado é mantido.
+tab_video	Video	Vídeo
+tab_score	Score	Placar
+tab_map	Map	Mapa
+tab_coach	Coach	Treinador
+tab_more	More	Mais
+frame_back	Previous frame	Quadro anterior
+frame_forward	Next frame	Próximo quadro
+instant_replay	Instant replay (slow motion)	Replay instantâneo (câmera lenta)
+zoom_bounce	Zoom on bounce	Zoom na quicada
+add_marker	Add marker	Adicionar marcador
+show_trajectory	Trajectory	Trajetória
+trajectory_legend	Green = ball detected · dashed orange = estimated position (no detection) · dots = bounces	Verde = bola detectada · laranja tracejado = posição estimada (sem detecção) · pontos = quicadas
+markers	Markers	Marcadores
+line_calls	Line calls	Chamadas de linha
+line_calls_disclaimer	Recreational assistance only, not an official electronic line-calling system. Probabilities come from the measurement-error model and are not yet calibrated with validation data.	Assistência recreativa, não é um sistema oficial de arbitragem eletrônica. As probabilidades vêm do modelo de erro de medição e ainda não foram calibradas com dados de validação.
+p_in	P(in) %1$s	P(dentro) %1$s
+analysis	Analysis	Análise
+analysis_none	This session has not been analysed yet. Everything runs on this phone, offline.	Esta sessão ainda não foi analisada. Tudo é processado neste celular, offline.
+analyze	Analyze	Analisar
+pause	Pause	Pausar
+retry	Try again	Tentar novamente
+analysis_done	Analysis complete.	Análise concluída.
+reprocess_from_here	Reprocess from here	Reprocessar a partir daqui
+reprocess_all	Reprocess all	Reprocessar tudo
+score_training_info	Training sessions have no score. See the statistics, map and coach tabs.	Sessões de treino não têm placar. Veja as abas de estatísticas, mapa e treinador.
+winner_is	Winner: %1$s	Vencedor: %1$s
+undo	Undo	Desfazer
+pending_review	%1$d points need review	%1$d pontos aguardando revisão
+only_pending	Only pending	Só pendentes
+score_edit_info	Tap any point to fix it. Later scores are recalculated automatically; the video is never changed.	Toque em qualquer ponto para corrigir. Os placares seguintes são recalculados automaticamente; o vídeo nunca é alterado.
+no_points	No points yet. Add them with the buttons above or run the automatic analysis.	Nenhum ponto ainda. Adicione pelos botões acima ou execute a análise automática.
+first_serve	1st serve	1º saque
+second_serve	2nd serve	2º saque
+auto	Auto	Auto
+review	Review	Revisar
+edit_point	Point #%1$d	Ponto #%1$d
+point_winner	Point won by	Ponto vencido por
+point_reason	How it ended	Como terminou
+serve	Serve	Saque
+unknown	Unknown	Desconhecido
+server_correction	Server correction from this point	Corrigir sacador a partir deste ponto
+mark_reviewed	Mark as reviewed	Marcar como revisado
+insert_before	Insert point before	Inserir ponto antes
+watch	Watch	Assistir
+close	Close	Fechar
+whole_match	Whole session	Sessão inteira
+set_n	Set %1$d	Set %1$d
+points	Points	Pontos
+points_won	Points won	Pontos ganhos
+first_serve_in	1st serve in	1º saque dentro
+first_serve_won	Points won on 1st serve	Pontos ganhos no 1º saque
+second_serve_won	Points won on 2nd serve	Pontos ganhos no 2º saque
+service_points_won	Service points won	Pontos ganhos no saque
+return_points_won	Return points won	Pontos ganhos na devolução
+break_points	Break points converted	Break points convertidos
+subjective_info	Winners and forced/unforced errors depend on interpretation: set them in the Score tab. “—” means there is not enough data.	Winners e erros forçados/não forçados dependem de interpretação: defina-os na aba Placar. “—” significa que não há dados suficientes.
+shots_title	Shots	Golpes
+total_shots	Total shots	Total de golpes
+accuracy	In (accuracy)	Dentro (precisão)
+depth	Deep balls (last third)	Bolas profundas (último terço)
+max_speed	Max speed (km/h)	Velocidade máx. (km/h)
+avg_speed	Average speed (km/h)	Velocidade média (km/h)
+serve_speed	Fastest serve (km/h)	Saque mais rápido (km/h)
+speed_info	Speeds are estimates of the average ground speed between contact and bounce (single camera).	Velocidades são estimativas da velocidade média no solo entre o contato e a quicada (uma câmera).
+rallies	Rallies	Rallies
+rally_count	Rallies	Rallies
+avg_rally	Average shots per rally	Média de golpes por rally
+longest_rally	Longest rally (shots)	Rally mais longo (golpes)
+avg_rally_sec	Average rally duration (s)	Duração média do rally (s)
+map_bounces	Bounces	Quicadas
+map_heat	Heat map	Mapa de calor
+map_players	Player positions	Posição dos jogadores
+map_trajectories	Shot directions	Direção dos golpes
+all_shots	All shots	Todos os golpes
+min_speed	Minimum speed: %1$d km/h	Velocidade mínima: %1$d km/h
+map_info	Tap a marker to watch that moment. Shaded ellipses show the measurement uncertainty (1σ).	Toque em uma marcação para assistir o momento. As elipses mostram a incerteza da medição (1σ).
+least_explored	Least used zone on the far side: %1$s (%2$d of %3$d balls)	Zona menos explorada no lado oposto: %1$s (%2$d de %3$d bolas)
+zone_deep_left	deep left	fundo esquerda
+zone_deep_center	deep center	fundo centro
+zone_deep_right	deep right	fundo direita
+zone_mid_left	middle left	meio esquerda
+zone_mid_center	middle center	meio centro
+zone_mid_right	middle right	meio direita
+zone_short_left	short left	curta esquerda
+zone_short_center	short center	curta centro
+zone_short_right	short right	curta direita
+coach_info	The local coach only uses data measured in this session. It needs a minimum number of samples before giving advice.	O treinador local usa somente dados medidos nesta sessão. Ele precisa de uma quantidade mínima de amostras antes de aconselhar.
+coach_no_data	Not enough data for reliable recommendations yet.	Ainda não há dados suficientes para recomendações confiáveis.
+sample_size	Based on %1$d measurements	Baseado em %1$d medições
+suggested_drills	Suggested drills	Exercícios sugeridos
+ins_backhand	Your backhand landed in %1$s of the time, versus %2$s for the forehand.	Seu backhand caiu dentro em %1$s das vezes, contra %2$s do forehand.
+ins_forehand	Your forehand landed in %1$s of the time, versus %2$s for the backhand.	Seu forehand caiu dentro em %1$s das vezes, contra %2$s do backhand.
+ins_first_serve	First serve percentage was %1$s (below 55%%).	O aproveitamento do primeiro saque foi %1$s (abaixo de 55%%).
+ins_double_faults	%1$d double faults in %2$d service points.	%1$d duplas faltas em %2$d pontos de saque.
+ins_serve_central	%1$s of your serves landed in the central zone of the service box: predictable placement.	%1$s dos seus saques caíram na zona central da área de saque: colocação previsível.
+ins_consistency_drop	Consistency dropped from %1$s to %2$s in the second half of the session.	A consistência caiu de %1$s para %2$s na segunda metade da sessão.
+ins_break_points	Only %1$s of %2$d break points converted.	Apenas %1$s de %2$d break points convertidos.
+ins_strong_serve	Strong serve: %1$s of service points won.	Saque forte: %1$s dos pontos de saque ganhos.
+ins_strong_return	Good return: %1$s of return points won.	Boa devolução: %1$s dos pontos de devolução ganhos.
+ins_low_depth	Only %1$s of your balls landed deep. Short balls give the opponent time to attack.	Apenas %1$s das suas bolas foram profundas. Bolas curtas dão tempo ao adversário para atacar.
+ins_good_consistency	Very consistent session: %1$s and %2$s in each half.	Sessão muito consistente: %1$s e %2$s em cada metade.
+drill_cc_backhand	Cross-court backhand rally: 3 × 20 balls aiming 1 m inside the singles line.	Rally cruzado de backhand: 3 × 20 bolas mirando 1 m dentro da linha de simples.
+drill_cc_forehand	Cross-court forehand rally: 3 × 20 balls with a high net clearance.	Rally cruzado de forehand: 3 × 20 bolas com boa altura sobre a rede.
+drill_serve_targets	Serve targets: 30 serves alternating T, body and wide (use the Precision mode).	Alvos de saque: 30 saques alternando T, corpo e aberto (use o modo Precisão).
+drill_second_serve	Second serve practice: 3 × 15 serves with more spin and margin over the net.	Treino de segundo saque: 3 × 15 saques com mais efeito e margem sobre a rede.
+drill_depth	Depth drill: rally aiming beyond the service line, count balls in the last third.	Treino de profundidade: rally mirando além da linha de saque, conte as bolas no último terço.
+drill_endurance	Endurance rallies: 4 blocks of 5 minutes keeping the ball in play.	Rallies de resistência: 4 blocos de 5 minutos mantendo a bola em jogo.
+drill_pressure	Pressure points: play games starting at 30-40 on return.	Pontos sob pressão: jogue games começando em 30-40 na devolução.
+drill_consistency	Consistency 20: 20 consecutive balls in play without errors.	Consistência 20: 20 bolas seguidas em jogo sem erros.
+pdf_disclaimer	Generated on-device. Line calls and speeds are recreational estimates, not certified measurements.	Gerado no aparelho. Chamadas de linha e velocidades são estimativas recreativas, não medições certificadas.
+tools	Tools	Ferramentas
+calibrate_court	Calibrate court	Calibrar quadra
+video_editor	Video editor & highlights	Editor de vídeo e melhores momentos
+biomechanics	Biomechanics	Biomecânica
+export	Export	Exportar
+working	Working…	Processando…
+export_info	Files are created on this phone. You choose if and where to share them.	Os arquivos são criados neste celular. Você escolhe se e onde compartilhá-los.
+session_info	Session details	Detalhes da sessão
+notes	Notes	Observações
+player_identity	Player identity correction	Correção de identidade dos jogadores
+player_identity_info	The tracker numbers each person it follows. If one player received two numbers (e.g. after changing sides), merge them. No face recognition is used.	O rastreador numera cada pessoa que acompanha. Se um jogador recebeu dois números (ex.: após trocar de lado), una-os. Nenhum reconhecimento facial é usado.
+merge_from	Merge track:	Unir trilha:
+merge_into	into:	com:

@@ -44,16 +44,25 @@ internal fun solveLinear(a: Array<DoubleArray>, b: DoubleArray): DoubleArray? {
  * Planar projective transform (3x3, h33 = 1) mapping image pixels to court metres.
  * Estimated with the normalised DLT (least squares for > 4 correspondences).
  */
-class Homography(val m: DoubleArray) {
+class Homography(val m: DoubleArray, private val reference: Vec2? = null) {
     init { require(m.size == 9) }
+
+    private fun w(p: Vec2) = m[6] * p.x + m[7] * p.y + m[8]
+
+    /**
+     * Sign of the projective scale on the side of the plane that contains the calibration points.
+     * The overall sign of an estimated homography is arbitrary, so it is fixed from a reference
+     * point (the centroid of the source correspondences) instead of assuming w > 0.
+     */
+    private val orientation: Double = reference?.let { if (w(it) < 0) -1.0 else 1.0 } ?: 1.0
 
     fun map(p: Vec2): Vec2 {
         val w = m[6] * p.x + m[7] * p.y + m[8]
         return Vec2((m[0] * p.x + m[1] * p.y + m[2]) / w, (m[3] * p.x + m[4] * p.y + m[5]) / w)
     }
 
-    /** True if the point is on the visible side of the horizon (w > 0). */
-    fun isInFront(p: Vec2): Boolean = (m[6] * p.x + m[7] * p.y + m[8]) > 0
+    /** True if the point is on the same side of the horizon line as the calibration points. */
+    fun isInFront(p: Vec2): Boolean = orientation * w(p) > 0
 
     fun inverse(): Homography {
         val a = m
@@ -65,7 +74,7 @@ class Homography(val m: DoubleArray) {
             (a[3] * a[7] - a[4] * a[6]), -(a[0] * a[7] - a[1] * a[6]), (a[0] * a[4] - a[1] * a[3]),
         ).map { it / det }.toDoubleArray()
         val s = inv[8]
-        return Homography(inv.map { it / s }.toDoubleArray())
+        return Homography(inv.map { it / s }.toDoubleArray(), reference?.let { map(it) })
     }
 
     /** Numerical Jacobian d(court)/d(pixel) at [p]: rows (dX/dx, dX/dy), (dY/dx, dY/dy). */
@@ -137,7 +146,8 @@ class Homography(val m: DoubleArray) {
             val tdInv = Homography(td).inverse().m
             val full = mul(mul(tdInv, hn), ts)
             if (abs(full[8]) < 1e-15) return null
-            val res = Homography(full.map { it / full[8] }.toDoubleArray())
+            val centroid = Vec2(src.sumOf { it.x } / src.size, src.sumOf { it.y } / src.size)
+            val res = Homography(full.map { it / full[8] }.toDoubleArray(), centroid)
             if (res.m.any { it.isNaN() || it.isInfinite() }) return null
             return res
         }

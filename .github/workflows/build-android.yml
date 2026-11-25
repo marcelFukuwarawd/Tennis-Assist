@@ -1,0 +1,138 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: ["**"]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    env:
+      CV_VERSION_CODE: ${{ github.run_number }}
+      CV_VERSION_NAME: ${{ startsWith(github.ref, 'refs/tags/v') && github.ref_name || format('0.1.0-build.{0}', github.run_number) }}
+    steps:
+      # 1. Linux environment + source code
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # 2. Java
+      - name: Set up Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      # 3. Android SDK
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install SDK packages
+        run: sdkmanager "platforms;android-35" "build-tools;35.0.0" "platform-tools"
+
+      # 4. Gradle cache (+ wrapper integrity check)
+      - name: Set up Gradle (with cache)
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Validate Gradle wrapper
+        uses: gradle/actions/wrapper-validation@v4
+
+      # 5. Dependencies
+      - name: Download dependencies
+        run: ./gradlew --no-daemon help
+
+      # 6. AI models integrity (SHA-256)
+      - name: Verify AI models
+        run: ./tools/verify_models.sh
+
+      # 7. Unit tests
+      - name: Unit tests
+        run: ./gradlew --no-daemon test
+
+      # 8. Lint
+      - name: Lint
+        run: ./gradlew --no-daemon lintDebug
+
+      # 9-10. Debug APK (no secrets needed)
+      - name: Build debug APK
+        run: |
+          ./gradlew --no-daemon assembleDebug
+          mkdir -p dist
+          cp app/build/outputs/apk/debug/app-debug.apk dist/CourtVisionAI-debug.apk
+
+      # 11. Signed release APK (only when the signing secrets exist)
+      - name: Build signed release APK
+        id: release
+        env:
+          KEYSTORE_B64: ${{ secrets.CV_KEYSTORE_BASE64 }}
+          CV_KEYSTORE_PASSWORD: ${{ secrets.CV_KEYSTORE_PASSWORD }}
+          CV_KEY_ALIAS: ${{ secrets.CV_KEY_ALIAS }}
+          CV_KEY_PASSWORD: ${{ secrets.CV_KEY_PASSWORD }}
+        run: |
+          if [ -z "$KEYSTORE_B64" ]; then
+            echo "No signing secrets configured: skipping the release APK (the debug APK is installable)."
+            echo "built=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/release.jks"
+          export CV_KEYSTORE_FILE="$RUNNER_TEMP/release.jks"
+          ./gradlew --no-daemon assembleRelease
+          cp app/build/outputs/apk/release/app-release.apk dist/CourtVisionAI-release-arm64.apk
+          rm -f "$RUNNER_TEMP/release.jks"
+          echo "built=true" >> "$GITHUB_OUTPUT"
+
+      # 12. Verify signature and manifest
+      - name: Verify APK signature and manifest
+        run: |
+          BT="$ANDROID_HOME/build-tools/35.0.0"
+          for apk in dist/*.apk; do
+            echo "== $apk"
+            "$BT/apksigner" verify --print-certs "$apk" | head -n 5
+            "$BT/aapt2" dump badging "$apk" | grep -E "^package:|sdkVersion|targetSdkVersion|native-code|uses-permission"
+            if "$BT/aapt2" dump badging "$apk" | grep -q "android.permission.INTERNET"; then
+              echo "ERROR: the app must not request INTERNET permission"; exit 1
+            fi
+          done
+
+      # 14. Checksums
+      - name: SHA-256 checksums
+        run: |
+          cd dist
+          sha256sum *.apk > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+
+      # 13. Artifacts
+      - name: Upload APKs
+        uses: actions/upload-artifact@v4
+        with:
+          name: CourtVisionAI-${{ env.CV_VERSION_NAME }}
+          path: dist/
+          if-no-files-found: error
+
+      - name: Upload test and lint reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: reports-${{ env.CV_VERSION_NAME }}
+          path: |
+            **/build/reports/
+            **/build/test-results/
+          if-no-files-found: ignore
+
+      # 15. GitHub Release for tags like v1.0.0
+      - name: Publish GitHub Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/*
+          generate_release_notes: true

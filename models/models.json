@@ -1,0 +1,28 @@
+{
+  "models": [
+    {
+      "name": "EfficientDet-Lite0 (object detector, int8)",
+      "file": "app/src/main/assets/models/efficientdet_lite0.tflite",
+      "url": "https://storage.googleapis.com/mediapipe-models/object_detector/efficientdet_lite0/int8/latest/efficientdet_lite0.tflite",
+      "sha256": "0720bf247bd76e6594ea28fa9c6f7c5242be774818997dbbeffc4da460c723bb",
+      "size": 4602795,
+      "license": "Apache-2.0",
+      "dataset": "COCO 2017 (80 classes; app uses 'person' and 'sports ball')",
+      "input": "320x320 RGB",
+      "format": "TFLite (LiteRT) with metadata, int8 quantised",
+      "used_for": "player detection; neural ball candidates fused with the colour/motion detector"
+    },
+    {
+      "name": "MediaPipe Pose Landmarker Lite (float16)",
+      "file": "app/src/main/assets/models/pose_landmarker_lite.task",
+      "url": "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/latest/pose_landmarker_lite.task",
+      "sha256": "59929e1d1ee95287735ddd833b19cf4ac46d29bc7afddbbf6753c459690d574a",
+      "size": 5777746,
+      "license": "Apache-2.0",
+      "dataset": "Google internal pose dataset (see MediaPipe model card)",
+      "input": "256x256 RGB (detector + landmark model bundle)",
+      "format": "MediaPipe .task bundle (TFLite float16)",
+      "used_for": "33 body landmarks for stroke classification and 2D biomechanics"
+    }
+  ]
+}

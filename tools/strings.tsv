@@ -1,0 +1,155 @@
+# key	English	Português (Brasil)
+app_name	Court Vision AI	Court Vision AI
+tagline	Private tennis & pickleball analysis, 100% on your phone	Análise privada de tênis e pickleball, 100% no seu celular
+channel_analysis	Video analysis	Análise de vídeo
+analysis_running	Analyzing video…	Analisando vídeo…
+tab_home	Home	Início
+tab_record	Record	Gravar
+tab_matches	Matches	Partidas
+tab_stats	Statistics	Estatísticas
+tab_settings	Settings	Configurações
+new_match	New match	Nova partida
+new_training	New training	Novo treino
+import_video	Import video	Importar vídeo
+imported_video	Imported video	Vídeo importado
+import_error	This video could not be read. Try another file.	Não foi possível ler este vídeo. Tente outro arquivo.
+processing_jobs	Processing jobs	Processamentos em andamento
+resume	Resume	Retomar
+best_plays	Best plays	Melhores jogadas
+no_data_yet	No data yet. Record or import a session and run the analysis.	Ainda não há dados. Grave ou importe uma sessão e execute a análise.
+recent_sessions	Recent sessions	Últimas sessões
+no_sessions	No sessions yet.	Nenhuma sessão ainda.
+storage	Storage	Armazenamento
+storage_free	%1$s free · about %2$d min of 1080p video	%1$s livres · cerca de %2$d min de vídeo 1080p
+performance_summary	Performance summary	Resumo de desempenho
+sessions	sessions	sessões
+shots	shots	golpes
+in_pct	in	dentro
+max_kmh	max km/h	máx. km/h
+evolution	Evolution (in % per session)	Evolução (% dentro por sessão)
+evolution_hint	At least two analysed sessions are needed.	São necessárias pelo menos duas sessões analisadas.
+mode_tennis_singles	Tennis singles	Tênis simples
+mode_tennis_doubles	Tennis doubles	Tênis duplas
+mode_pickle_singles	Pickleball singles	Pickleball simples
+mode_pickle_doubles	Pickleball doubles	Pickleball duplas
+mode_training_solo	Solo training	Treino individual
+mode_training_partner	Training with partner	Treino com parceiro
+mode_training_serve	Serve practice	Treino de saque
+mode_training_machine	Ball machine	Máquina lançadora
+mode_training_precision	Precision targets	Treino de precisão
+mode_technique	Technique (close-up)	Técnica (câmera próxima)
+shot_serve	Serve	Saque
+shot_forehand	Forehand	Forehand
+shot_backhand	Backhand	Backhand
+shot_volley	Volley	Voleio
+shot_smash	Smash	Smash
+shot_lob	Lob	Lob
+shot_drop	Drop shot	Drop shot
+shot_return	Return	Devolução
+shot_dink	Dink	Dink
+shot_drive	Drive	Drive
+shot_third	Third shot drop	Terceira bola (drop)
+shot_unknown	Unclassified	Não classificado
+reason_ace	Ace	Ace
+reason_double_fault	Double fault	Dupla falta
+reason_winner	Winner	Winner
+reason_forced	Forced error	Erro forçado
+reason_unforced	Unforced error	Erro não forçado
+reason_out	Ball out	Bola fora
+reason_net	Net	Rede
+reason_double_bounce	Double bounce	Dois quiques
+reason_unknown	Not specified	Não especificado
+call_in	In	Dentro
+call_out	Out	Fora
+call_inconclusive	Inconclusive	Inconclusivo
+stage_queued	Queued	Na fila
+stage_court	Detecting court	Detectando a quadra
+stage_decode	Tracking ball and players	Rastreando bola e jogadores
+stage_cooling	Cooling down (device hot)	Resfriando (aparelho quente)
+stage_events	Detecting bounces and shots	Detectando quiques e golpes
+stage_calls	Line calls	Chamadas de linha
+stage_shots	Classifying shots	Classificando golpes
+stage_score	Scoring	Pontuação
+stage_paused	Paused	Pausado
+stage_done	Done	Concluído
+stage_error	Error	Erro
+stage_start	Starting	Iniciando
+err_calibration	The court could not be detected automatically. Open “Calibrate court” and drag the 4 corners.	A quadra não foi detectada automaticamente. Abra “Calibrar quadra” e arraste os 4 cantos.
+err_video	The video file is unreadable or damaged.	O arquivo de vídeo está ilegível ou danificado.
+err_hot	Paused because the phone is too hot. It will continue when you resume.	Pausado porque o celular está muito quente. Continuará quando você retomar.
+err_internal	Unexpected error (%1$s). Progress was saved; you can resume.	Erro inesperado (%1$s). O progresso foi salvo; você pode retomar.
+match	Match	Partida
+training	Training	Treino
+quick_start	Quick start (default settings)	Início rápido (configuração padrão)
+mode	Mode	Modalidade
+players_optional	Players (optional local labels)	Jogadores (etiquetas locais opcionais)
+players_hint	Names stay only on this phone. They are not accounts.	Os nomes ficam só neste celular. Não são contas.
+player_a	Player A (you, near side at start)	Jogador A (você, lado da câmera no início)
+player_a2	Partner A	Parceiro A
+player_b	Player B	Jogador B
+player_b2	Partner B	Parceiro B
+left_handed	Player A is left-handed	Jogador A é canhoto
+rules	Rules	Regras
+best_of	Best of (sets)	Melhor de (sets)
+no_ad	No-ad scoring	Sem vantagem (no-ad)
+match_tiebreak	Match tie-break instead of final set	Match tie-break no lugar do último set
+short_sets	Short sets (first to 4 games)	Sets curtos (4 games)
+rally_scoring	Rally scoring	Rally scoring
+points_to_win	Points per game	Pontos por game
+games	Games in the match	Games na partida
+first_server	First server	Primeiro a sacar
+surface	Surface	Superfície
+surface_clay	Clay	Saibro
+surface_hard	Hard	Rápida
+surface_grass	Grass	Grama
+surface_synthetic	Synthetic	Sintética
+surface_indoor	Indoor	Indoor
+open_camera	Open camera	Abrir câmera
+camera_permission_needed	Camera permission is required to record.	A permissão da câmera é necessária para gravar.
+minutes_left	≈ %1$d min left	≈ %1$d min restantes
+thermal_moderate	warm	morno
+thermal_severe	hot – live AI reduced	quente – IA ao vivo reduzida
+low_storage	Low storage! Free some space.	Pouco espaço! Libere armazenamento.
+camera_error	The camera could not start with these settings. Try another resolution or lens.	A câmera não iniciou com essas configurações. Tente outra resolução ou lente.
+live_unavailable	Live analysis is not supported with these camera settings on this device.	Análise ao vivo não suportada com essas configurações neste aparelho.
+voice_hit	Hit	Acertou
+voice_out	Out	Fora
+voice_short	Short	Bola curta
+voice_long	Long	Bola longa
+voice_miss	Missed	Errou
+redo	Redo	Refazer
+calibration_hint	Drag the 4 circles to the outer corners of the court (far-left, far-right, near-right, near-left). The green lines must match the court lines.	Arraste os 4 círculos até os cantos externos da quadra (fundo-esquerdo, fundo-direito, frente-direito, frente-esquerdo). As linhas verdes devem coincidir com as da quadra.
+auto_detect	Auto-detect	Detectar automaticamente
+save	Save	Salvar
+cancel	Cancel	Cancelar
+locked_hint	Screen locked. Long-press to unlock.	Tela bloqueada. Toque e segure para desbloquear.
+lens	Lens	Lente
+lens_default	Default	Padrão
+lens_ultrawide	Ultrawide	Ultrawide
+lens_main	Main	Principal
+lens_tele	Telephoto	Teleobjetiva
+resolution	Resolution	Resolução
+zoom	Zoom	Zoom
+exposure	Exposure	Exposição
+manual_iso_shutter	Manual ISO / shutter	ISO / obturador manual
+shutter	Shutter	Obturador
+manual_focus	Manual focus	Foco manual
+white_balance	White balance	Balanço de branco
+wb_auto	Auto	Auto
+wb_daylight	Daylight	Luz do dia
+wb_cloudy	Cloudy	Nublado
+wb_fluorescent	Fluorescent	Fluorescente
+wb_incandescent	Incandescent	Incandescente
+ae_lock	Lock exposure	Travar exposição
+awb_lock	Lock white balance	Travar balanço de branco
+focus_hint	Tap the preview to focus; long-press to lock focus and exposure.	Toque na imagem para focar; toque e segure para travar foco e exposição.
+adv_ok	Position OK	Posicionamento adequado
+adv_level	Level the phone	Nivele o celular
+adv_tilt_down	Tilt the camera down	Incline a câmera para baixo
+adv_tilt_up	Tilt the camera up	Incline a câmera para cima
+adv_move_back	Move back / zoom out: court not fully visible	Afaste o celular: quadra não está toda visível
+adv_center	Center the court	Centralize a quadra
+adv_zoom	Zoom in or move closer	Aumente o zoom ou aproxime-se
+adv_low_light	Low light	Iluminação insuficiente
+adv_raise	Raise the camera	Eleve a câmera
+adv_calibrate	Calibrate the court (frame icon)	Calibre a quadra (ícone de moldura)

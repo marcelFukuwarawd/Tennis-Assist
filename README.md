@@ -94,20 +94,19 @@ As senhas **nunca** ficam no código: apenas nos "Secrets" do GitHub.
 
 ## Primeiro uso do aplicativo
 
-1. **Gravar → Início rápido**: abre a câmera com a configuração padrão.
-2. Coloque o celular atrás da linha de fundo, alto (tripé ou grade a 2–4 m), com a quadra inteira
-   visível. Siga as dicas na tela ("Nivele o celular", "Afaste o celular"...).
-3. Toque no ícone de moldura para **calibrar**: arraste os 4 círculos até os cantos externos da quadra
-   (ou toque em *Detectar automaticamente*). As linhas verdes devem coincidir com as da quadra.
-4. Toque no botão vermelho para gravar. Use os botões grandes **+ A / + B** para marcar pontos
-   (opcional). O cadeado bloqueia toques acidentais (segure para desbloquear).
-5. Ao parar, a análise começa sozinha em segundo plano. Acompanhe na tela inicial.
-6. Abra a sessão em **Partidas** para ver vídeo, placar (corrigível), estatísticas, mapa, treinador
-   e a aba **Mais** (editor de vídeo, biomecânica, exportações).
+1. Na tela **Início**, toque em **Gravar partida**. Escolha tênis ou pickleball, simples ou duplas, e
+   (se quiser) os nomes. Toque em **Começar a gravar**.
+2. A câmera abre em tela cheia, deitada. Coloque o celular atrás da linha de fundo, alto (tripé ou
+   grade a 2–4 m), com a quadra inteira visível, e siga as dicas na tela.
+3. Toque no ícone de moldura para **calibrar**: arraste os círculos numerados até os cantos externos
+   da quadra (a lupa mostra o detalhe) e toque em **Ajuste fino automático**.
+4. Toque no botão vermelho para gravar. Use **+ A / + B** para marcar pontos; logo depois aparecem
+   botões para dizer como o ponto terminou (winner, erro não forçado, erro forçado, ace, dupla falta).
+5. Ao parar, a análise começa sozinha. Abra a sessão em **Partidas**: a aba **Resumo** mostra o placar
+   e as estatísticas principais; **Pontos** permite corrigir e classificar cada ponto com um toque;
+   **Vídeo** tem tela cheia, câmera lenta e quadro a quadro; **Mais** tem mapa, treinador, editor e exportação.
 
 Também é possível **Importar vídeo** de qualquer câmera (Android, iPhone, GoPro, DJI...).
-
----
 
 ## Para desenvolvedores
 

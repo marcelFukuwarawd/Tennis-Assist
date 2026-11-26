@@ -15,6 +15,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BookmarkAdd
+import androidx.compose.material.icons.filled.Fullscreen
 import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material.icons.filled.SkipPrevious
 import androidx.compose.material.icons.filled.SlowMotionVideo
@@ -76,7 +77,7 @@ fun callColor(c: String?) = when (c) { "IN" -> InGreen; "OUT" -> OutRed; else ->
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun VideoTab(vm: SessionViewModel) {
+fun VideoTab(vm: SessionViewModel, onFullScreen: (Long) -> Unit) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val s by vm.session.collectAsState()
@@ -119,21 +120,7 @@ fun VideoTab(vm: SessionViewModel) {
                 Modifier.graphicsLayer { if (zoom) { scaleX = 2.5f; scaleY = 2.5f; transformOrigin = origin }; clip = true },
                 aspect,
             ) {
-                if (showTrack) Canvas(Modifier.fillMaxSize()) {
-                    val pts = window.filter { it.timeMs in (pos - 900)..pos }
-                    for (i in 1 until pts.size) {
-                        val a = pts[i - 1]; val b = pts[i]
-                        if (b.timeMs - a.timeMs > 200) continue
-                        val o1 = Offset((a.x * size.width).toFloat(), (a.y * size.height).toFloat())
-                        val o2 = Offset((b.x * size.width).toFloat(), (b.y * size.height).toFloat())
-                        // estimated (predicted) segments are drawn dashed and orange
-                        if (a.observed && b.observed) drawLine(Lime, o1, o2, 3.dp.toPx())
-                        else drawLine(Unsure, o1, o2, 2.dp.toPx(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 8f)))
-                    }
-                    bounces.filter { it.timeMs in (pos - 2500)..pos }.forEach { bc ->
-                        drawCircle(callColor(bc.call), 7.dp.toPx(), Offset((bc.imageX * size.width).toFloat(), (bc.imageY * size.height).toFloat()))
-                    }
-                }
+                if (showTrack) TrajectoryOverlay(window, bounces, pos)
             }
         }
         item {
@@ -147,6 +134,7 @@ fun VideoTab(vm: SessionViewModel) {
                 IconButton(onClick = { scope.launch { vm.app.db.edits().insertMarker(MarkerEntity(sessionId = session.id, timeMs = pos, label = formatDuration(pos))); Feedback.show(context, R.string.marker_added) } }) {
                     Icon(Icons.Filled.BookmarkAdd, stringResource(R.string.add_marker))
                 }
+                IconButton(onClick = { player.pause(); onFullScreen(pos) }) { Icon(Icons.Filled.Fullscreen, stringResource(R.string.full_screen)) }
                 Text(formatDuration(pos), Modifier.padding(start = 8.dp))
             }
             FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -185,7 +173,7 @@ fun VideoTab(vm: SessionViewModel) {
 }
 
 @Composable
-private fun AnalysisCard(vm: SessionViewModel, pos: Long) {
+fun AnalysisCard(vm: SessionViewModel, pos: Long) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val s by vm.session.collectAsState()
@@ -228,3 +216,22 @@ private fun AnalysisCard(vm: SessionViewModel, pos: Long) {
     }
 }
 
+
+/** Ball trajectory (observed = green, estimated = dashed orange) and recent bounces over the video. */
+@Composable
+fun TrajectoryOverlay(window: List<BallTrackEntity>, bounces: List<com.courtvision.ai.data.BounceEntity>, pos: Long) {
+    Canvas(Modifier.fillMaxSize()) {
+        val pts = window.filter { it.timeMs in (pos - 900)..pos }
+        for (i in 1 until pts.size) {
+            val a = pts[i - 1]; val b = pts[i]
+            if (b.timeMs - a.timeMs > 200) continue
+            val o1 = Offset((a.x * size.width).toFloat(), (a.y * size.height).toFloat())
+            val o2 = Offset((b.x * size.width).toFloat(), (b.y * size.height).toFloat())
+            if (a.observed && b.observed) drawLine(Lime, o1, o2, 3.dp.toPx())
+            else drawLine(Unsure, o1, o2, 2.dp.toPx(), pathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 8f)))
+        }
+        bounces.filter { it.timeMs in (pos - 2500)..pos }.forEach { bc ->
+            drawCircle(callColor(bc.call), 7.dp.toPx(), Offset((bc.imageX * size.width).toFloat(), (bc.imageY * size.height).toFloat()))
+        }
+    }
+}

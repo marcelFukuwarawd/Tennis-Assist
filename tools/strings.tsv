@@ -417,3 +417,37 @@ setting_saved	Setting saved	Configuração salva
 deleted	Deleted	Excluído
 marker_added	Marker added	Marcador adicionado
 point_added	Point added	Ponto adicionado
+corner_1	Far left	Fundo esquerdo
+corner_2	Far right	Fundo direito
+corner_3	Near right	Frente direito
+corner_4	Near left	Frente esquerdo
+fine_adjust	Fine auto-adjust	Ajuste fino automático
+calib_help	Drag the numbered circles to the OUTER corners of the court. Drag anywhere else for slow, precise movement. Then tap “Fine auto-adjust”.	Arraste os círculos numerados até os cantos EXTERNOS da quadra. Arrastar em qualquer outro lugar move devagar, com precisão. Depois toque em “Ajuste fino automático”.
+hide_panel	Hide panel	Esconder painel
+show_panel	Show panel	Mostrar painel
+frame_time	Video frame	Quadro do vídeo
+advanced_camera	Advanced camera controls (exposure, ISO, focus, white balance)	Controles avançados da câmera (exposição, ISO, foco, balanço de branco)
+tab_summary	Summary	Resumo
+tab_points	Points	Pontos
+back	Back	Voltar
+full_screen	Full screen	Tela cheia
+key_stats	Main statistics	Estatísticas principais
+unclassified_points	%1$d points without “how it ended” – winners and errors only count classified points.	%1$d pontos sem “como terminou” – winners e erros só contam pontos classificados.
+classify_points	Classify points	Classificar pontos
+shots_need_analysis	Shot data appears after the video analysis.	Os dados de golpes aparecem depois da análise do vídeo.
+show_full_stats	See all statistics	Ver todas as estatísticas
+hide_full_stats	Hide full statistics	Esconder estatísticas completas
+watch_video	Watch video	Assistir vídeo
+record_match	Record a match	Gravar partida
+stats_and_evolution	Statistics and evolution	Estatísticas e evolução
+more_options	More options	Mais opções
+fewer_options	Fewer options	Menos opções
+start_recording	Start recording	Começar a gravar
+sport	Sport	Esporte
+format	Format	Formato
+singles	Singles	Simples
+doubles	Doubles	Duplas
+training_type	Training type	Tipo de treino
+advanced	Advanced	Avançado
+voice	Voice announcements (score and line calls)	Avisos por voz (placar e chamadas de linha)
+analysis_quality	Analysis quality	Qualidade da análise

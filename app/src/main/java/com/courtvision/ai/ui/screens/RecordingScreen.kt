@@ -3,7 +3,6 @@ package com.courtvision.ai.ui.screens
 import com.courtvision.ai.util.Feedback
 import android.Manifest
 import android.app.Activity
-import android.content.pm.ActivityInfo
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.hardware.Sensor
@@ -100,7 +99,7 @@ import com.courtvision.ai.data.nameB
 import com.courtvision.ai.data.scoringSession
 import com.courtvision.ai.data.toScoringEvents
 import com.courtvision.ai.processing.AnalysisScheduler
-import com.courtvision.ai.ui.CornerEditor
+import com.courtvision.ai.ui.ImmersiveMode
 import com.courtvision.ai.ui.InGreen
 import com.courtvision.ai.ui.Lime
 import com.courtvision.ai.ui.OutRed
@@ -147,12 +146,11 @@ fun RecordingScreen(nav: NavHostController, sessionId: Long) {
         permLauncher.launch(req.toTypedArray())
     }
 
-    // landscape + keep screen on while this screen is visible
+    // full screen landscape + keep screen on while this screen is visible
+    ImmersiveMode(landscape = true)
     DisposableEffect(Unit) {
-        activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
         view.keepScreenOn = true
         onDispose {
-            activity?.requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
             view.keepScreenOn = false
             activity?.window?.let { w -> w.attributes = w.attributes.apply { screenBrightness = -1f } }
         }
@@ -182,6 +180,8 @@ fun RecordingScreen(nav: NavHostController, sessionId: Long) {
     var corners by remember { mutableStateOf(defaultCorners) }
     var bindError by remember { mutableStateOf(false) }
     val redo = remember { mutableStateListOf<PointEntity>() }
+    var reasonPrompt by remember { mutableLongStateOf(0L) }
+    var advanced by remember { mutableStateOf(false) }
     val court = session?.court()
     val precision = session?.mode == SessionMode.TRAINING_PRECISION
     val zones by app.db.training().observeZones().collectAsState(initial = emptyList())
@@ -324,6 +324,7 @@ fun RecordingScreen(nav: NavHostController, sessionId: Long) {
         val prevEnd = points.lastOrNull()?.endMs ?: 0
         app.db.points().replaceAll(sessionId, points + PointEntity(sessionId = sessionId, order = points.size, winnerA = winner == Side.A, startMs = maxOf(prevEnd, now - 15_000), endMs = now))
         redo.clear()
+        reasonPrompt = System.currentTimeMillis()
         val s = session ?: return@launch
         if (settings.voiceScore) {
             val board = s.scoringSession().board((points + PointEntity(sessionId = sessionId, order = 0, winnerA = winner == Side.A)).toScoringEvents())
@@ -388,8 +389,8 @@ fun RecordingScreen(nav: NavHostController, sessionId: Long) {
         val s = session
         if (s != null && s.mode.isMatch) {
             val board = s.scoringSession().board(points.toScoringEvents())
-            Row(Modifier.align(Alignment.BottomCenter).padding(12.dp).background(Color.Black.copy(alpha = 0.6f), MaterialTheme.shapes.large).padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                Button(onClick = { addPoint(Side.A) }, Modifier.height(72.dp).width(150.dp)) { Text("+ " + s.nameA(), maxLines = 1) }
+            Row(Modifier.align(Alignment.BottomCenter).padding(8.dp).background(Color.Black.copy(alpha = 0.5f), MaterialTheme.shapes.large).padding(6.dp), verticalAlignment = Alignment.CenterVertically) {
+                Button(onClick = { addPoint(Side.A) }, Modifier.height(64.dp).width(130.dp)) { Text("+ " + s.nameA(), maxLines = 1) }
                 Column(Modifier.padding(horizontal = 16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                     Text((if (board.server == Side.A) "● " else "") + s.nameA() + "  " + board.setsOrGamesA.joinToString(" ") + "  " + board.currentA, color = Color.White, fontWeight = FontWeight.Bold)
                     Text((if (board.server == Side.B) "● " else "") + s.nameB() + "  " + board.setsOrGamesB.joinToString(" ") + "  " + board.currentB, color = Color.White, fontWeight = FontWeight.Bold)
@@ -400,36 +401,46 @@ fun RecordingScreen(nav: NavHostController, sessionId: Long) {
                         TextButton(onClick = { scope.launch { redo.removeLastOrNull()?.let { p -> app.db.points().replaceAll(sessionId, points + p) } } }, enabled = redo.isNotEmpty()) { Text(stringResource(R.string.redo)) }
                     }
                 }
-                Button(onClick = { addPoint(Side.B) }, Modifier.height(72.dp).width(150.dp)) { Text("+ " + s.nameB(), maxLines = 1) }
+                Button(onClick = { addPoint(Side.B) }, Modifier.height(64.dp).width(130.dp)) { Text("+ " + s.nameB(), maxLines = 1) }
             }
         }
 
-        // ---- calibration overlay ----
-        val frame = calibFrame
-        if (frame != null && court != null) {
-            Column(Modifier.fillMaxSize().background(Color.Black.copy(alpha = 0.92f)).padding(8.dp)) {
-                Text(stringResource(R.string.calibration_hint), color = Color.White)
-                Row(Modifier.weight(1f)) {
-                    CornerEditor(frame, court, corners, { corners = it }, Modifier.weight(1f))
-                    Column(Modifier.width(180.dp).padding(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        FilledTonalButton(onClick = {
-                            val w = frame.width; val h = frame.height
-                            val px = IntArray(w * h); frame.getPixels(px, 0, w, 0, 0, w, h)
-                            CourtAutoDetector(court).detect(px, w, h)?.let { r -> corners = r.corners.map { Vec2(it.x / w, it.y / h) } }
-                        }) { Text(stringResource(R.string.auto_detect)) }
-                        Button(onClick = {
-                            scope.launch {
-                                val data = CalibrationData(corners.map { it.x }, corners.map { it.y }, auto = false)
-                                app.db.sessions().setCalibration(sessionId, AppJson.encodeToString(CalibrationData.serializer(), data))
-                                analyzer?.calibration = data
-                                Feedback.show(context)
-                                calibFrame = null
-                            }
-                        }) { Text(stringResource(R.string.save)) }
-                        TextButton(onClick = { calibFrame = null }) { Text(stringResource(R.string.cancel)) }
-                    }
+        // ---- quick "how did the point end" buttons (stats without waiting for the analysis) ----
+        if (reasonPrompt > 0 && points.isNotEmpty()) {
+            LaunchedEffect(reasonPrompt) { delay(7000); reasonPrompt = 0 }
+            Row(
+                Modifier.align(Alignment.BottomCenter).padding(bottom = 110.dp).background(Color.Black.copy(alpha = 0.7f), MaterialTheme.shapes.large).padding(6.dp),
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                listOf("WINNER" to R.string.reason_winner, "ACE" to R.string.reason_ace, "UNFORCED_ERROR" to R.string.reason_unforced, "FORCED_ERROR" to R.string.reason_forced, "DOUBLE_FAULT" to R.string.reason_double_fault).forEach { (r, l) ->
+                    FilledTonalButton(onClick = {
+                        scope.launch {
+                            val last = points.last()
+                            app.db.points().replaceAll(sessionId, points.dropLast(1) + last.copy(reason = r))
+                            reasonPrompt = 0
+                        }
+                    }) { Text(stringResource(l), maxLines = 1) }
                 }
             }
+        }
+
+        // ---- calibration overlay (full screen) ----
+        val frame = calibFrame
+        if (frame != null && court != null) {
+            CalibrationLayout(
+                frame = frame, court = court, corners = corners, onChange = { corners = it },
+                onSave = { support ->
+                    scope.launch {
+                        val data = CalibrationData(corners.map { it.x }, corners.map { it.y }, auto = false, lineSupport = support)
+                        app.db.sessions().setCalibration(sessionId, AppJson.encodeToString(CalibrationData.serializer(), data))
+                        analyzer?.calibration = data
+                        Feedback.show(context)
+                        calibFrame = null
+                    }
+                },
+                onCancel = { calibFrame = null },
+                saveLabel = stringResource(R.string.save),
+            )
         }
 
         // ---- touch lock: long press to unlock ----
@@ -460,7 +471,8 @@ fun RecordingScreen(nav: NavHostController, sessionId: Long) {
             }
             Text(stringResource(R.string.zoom), fontWeight = FontWeight.Bold)
             Slider(zoom, { zoom = it; controller.setZoom(it) })
-            caps?.let { c ->
+            ToggleRow(stringResource(R.string.advanced_camera), advanced) { advanced = it }
+            if (advanced) caps?.let { c ->
                 if (c.exposureRange.upper > c.exposureRange.lower) {
                     Text(stringResource(R.string.exposure) + " ${"%.1f".format(ev * c.exposureStep)} EV", fontWeight = FontWeight.Bold)
                     Slider(ev.toFloat(), { ev = it.toInt(); controller.setExposureIndex(ev) }, valueRange = c.exposureRange.lower.toFloat()..c.exposureRange.upper.toFloat())
@@ -486,16 +498,18 @@ fun RecordingScreen(nav: NavHostController, sessionId: Long) {
                     manual.focusDiopters?.let { d -> Slider(d, { manual = manual.copy(focusDiopters = it); controller.applyManual(manual) }, valueRange = 0f..maxD) }
                 }
             }
-            Text(stringResource(R.string.white_balance), fontWeight = FontWeight.Bold)
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            if (advanced) Text(stringResource(R.string.white_balance), fontWeight = FontWeight.Bold)
+            if (advanced) FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 listOf(
                     CaptureRequest.CONTROL_AWB_MODE_AUTO to R.string.wb_auto, CaptureRequest.CONTROL_AWB_MODE_DAYLIGHT to R.string.wb_daylight,
                     CaptureRequest.CONTROL_AWB_MODE_CLOUDY_DAYLIGHT to R.string.wb_cloudy, CaptureRequest.CONTROL_AWB_MODE_FLUORESCENT to R.string.wb_fluorescent,
                     CaptureRequest.CONTROL_AWB_MODE_INCANDESCENT to R.string.wb_incandescent,
                 ).forEach { (m, l) -> FilterChip(manual.awbMode == m, { manual = manual.copy(awbMode = m); controller.applyManual(manual) }, { Text(stringResource(l)) }) }
             }
-            ToggleRow(stringResource(R.string.ae_lock), manual.aeLock) { manual = manual.copy(aeLock = it); controller.applyManual(manual) }
-            ToggleRow(stringResource(R.string.awb_lock), manual.awbLock) { manual = manual.copy(awbLock = it); controller.applyManual(manual) }
+            if (advanced) {
+                ToggleRow(stringResource(R.string.ae_lock), manual.aeLock) { manual = manual.copy(aeLock = it); controller.applyManual(manual) }
+                ToggleRow(stringResource(R.string.awb_lock), manual.awbLock) { manual = manual.copy(awbLock = it); controller.applyManual(manual) }
+            }
             Text(stringResource(R.string.focus_hint), style = MaterialTheme.typography.labelSmall)
             Spacer(Modifier.height(24.dp))
         }

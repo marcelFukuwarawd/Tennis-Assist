@@ -3,15 +3,18 @@ package com.courtvision.ai.ui
 import android.content.Context
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.SportsTennis
-import androidx.compose.material.icons.filled.Videocam
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.ScaffoldDefaults
+import androidx.compose.foundation.layout.WindowInsets
+import com.courtvision.ai.ui.screens.FullScreenPlayer
+import com.courtvision.ai.ui.screens.SessionSubScreen
+import com.courtvision.ai.ui.screens.SubScreen
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -52,11 +55,12 @@ private data class Tab(val route: String, val label: Int, val icon: ImageVector)
 
 private val tabs = listOf(
     Tab("home", R.string.tab_home, Icons.Filled.Home),
-    Tab("record", R.string.tab_record, Icons.Filled.Videocam),
     Tab("matches", R.string.tab_matches, Icons.Filled.SportsTennis),
-    Tab("stats", R.string.tab_stats, Icons.Filled.BarChart),
     Tab("settings", R.string.tab_settings, Icons.Filled.Settings),
 )
+
+/** Routes shown edge-to-edge without the bottom bar (camera, calibration, full-screen video). */
+private val fullScreenRoutes = listOf("camera", "calibrate", "player")
 
 object Routes {
     fun session(id: Long, t: Long = -1) = "session/$id?t=$t"
@@ -65,6 +69,9 @@ object Routes {
     fun editor(id: Long) = "editor/$id"
     fun biomech(id: Long, t: Long = 0) = "biomech/$id?t=$t"
     fun record(kind: String) = "record?kind=$kind"
+    fun player(id: Long, t: Long = 0) = "player/$id?t=$t"
+    fun map(id: Long) = "map/$id"
+    fun coach(id: Long) = "coach/$id"
 }
 
 @Composable
@@ -72,8 +79,10 @@ fun AppNavigation() {
     val nav = rememberNavController()
     val entry by nav.currentBackStackEntryAsState()
     val route = entry?.destination?.route ?: "home"
-    val showBar = tabs.any { route.startsWith(it.route) } && !route.startsWith("camera")
+    val fullScreen = fullScreenRoutes.any { route.startsWith(it) }
+    val showBar = tabs.any { route == it.route }
     Scaffold(
+        contentWindowInsets = if (fullScreen) WindowInsets(0, 0, 0, 0) else ScaffoldDefaults.contentWindowInsets,
         bottomBar = {
             if (showBar) NavigationBar {
                 tabs.forEach { t ->
@@ -94,6 +103,12 @@ fun AppNavigation() {
             }
             composable("matches") { MatchesScreen(nav) }
             composable("stats") { StatsScreen(nav) }
+            composable(
+                "player/{id}?t={t}",
+                arguments = listOf(navArgument("id") { type = NavType.LongType }, navArgument("t") { type = NavType.LongType; defaultValue = 0L }),
+            ) { FullScreenPlayer(nav, it.arguments!!.getLong("id"), it.arguments!!.getLong("t")) }
+            composable("map/{id}", arguments = listOf(navArgument("id") { type = NavType.LongType })) { SessionSubScreen(nav, it.arguments!!.getLong("id"), SubScreen.MAP) }
+            composable("coach/{id}", arguments = listOf(navArgument("id") { type = NavType.LongType })) { SessionSubScreen(nav, it.arguments!!.getLong("id"), SubScreen.COACH) }
             composable("settings") { SettingsScreen(nav) }
             composable("privacy") { PrivacyScreen(nav) }
             composable("licenses") { LicensesScreen(nav) }

@@ -23,6 +23,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -84,17 +85,17 @@ fun HomeScreen(nav: NavHostController) {
             Text(stringResource(R.string.tagline), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
         }
         item {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Button(onClick = { nav.navigate(Routes.record("match")) }, Modifier.weight(1f).height(64.dp)) {
-                    Icon(Icons.Filled.SportsTennis, null); Spacer(Modifier.size(6.dp)); Text(stringResource(R.string.new_match))
-                }
-                FilledTonalButton(onClick = { nav.navigate(Routes.record("training")) }, Modifier.weight(1f).height(64.dp)) {
-                    Icon(Icons.Filled.FitnessCenter, null); Spacer(Modifier.size(6.dp)); Text(stringResource(R.string.new_training))
-                }
+            Button(onClick = { nav.navigate(Routes.record("match")) }, Modifier.fillMaxWidth().height(76.dp)) {
+                Icon(Icons.Filled.SportsTennis, null); Spacer(Modifier.size(8.dp)); Text(stringResource(R.string.record_match), style = MaterialTheme.typography.titleMedium)
             }
             Spacer(Modifier.height(8.dp))
-            FilledTonalButton(onClick = { importer.launch(arrayOf("video/*")) }, Modifier.fillMaxWidth().height(56.dp)) {
-                Icon(Icons.Filled.FileUpload, null); Spacer(Modifier.size(6.dp)); Text(stringResource(R.string.import_video))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                FilledTonalButton(onClick = { nav.navigate(Routes.record("training")) }, Modifier.weight(1f).height(60.dp)) {
+                    Icon(Icons.Filled.FitnessCenter, null); Spacer(Modifier.size(6.dp)); Text(stringResource(R.string.new_training))
+                }
+                FilledTonalButton(onClick = { importer.launch(arrayOf("video/*")) }, Modifier.weight(1f).height(60.dp)) {
+                    Icon(Icons.Filled.FileUpload, null); Spacer(Modifier.size(6.dp)); Text(stringResource(R.string.import_video))
+                }
             }
             if (importError) Text(stringResource(R.string.import_error), color = MaterialTheme.colorScheme.error)
         }
@@ -111,33 +112,21 @@ fun HomeScreen(nav: NavHostController) {
                 }
             }
         }
-        item { PerformanceSummary(sessions, shots) }
         item {
-            SectionCard(stringResource(R.string.best_plays)) {
-                val best = shots.filter { it.speedKmh != null && it.sideA != false }.sortedByDescending { it.speedKmh }.take(3)
-                if (best.isEmpty()) EmptyHint(stringResource(R.string.no_data_yet))
-                best.forEach { sh ->
-                    Row(Modifier.fillMaxWidth().clickable { nav.navigate(Routes.session(sh.sessionId, sh.timeMs)) }.padding(vertical = 6.dp)) {
-                        Text("${formatNum(sh.speedKmh)} km/h", Modifier.weight(1f), fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary)
-                        Text(shotLabel(sh.type), Modifier.weight(1f))
-                        Text(formatDuration(sh.timeMs))
-                    }
-                }
-            }
+            PerformanceSummary(sessions, shots)
+            OutlinedButton(onClick = { nav.navigate("stats") }, Modifier.fillMaxWidth().padding(top = 6.dp)) { Text(stringResource(R.string.stats_and_evolution)) }
         }
         item {
             SectionCard(stringResource(R.string.recent_sessions)) {
                 if (sessions.isEmpty()) EmptyHint(stringResource(R.string.no_sessions))
-                sessions.take(5).forEach { s -> SessionRow(s) { nav.navigate(Routes.session(s.id)) } }
+                sessions.take(4).forEach { s -> SessionRow(s) { nav.navigate(Routes.session(s.id)) } }
             }
         }
         item {
-            val free = Storage.freeBytes(context)
-            SectionCard(stringResource(R.string.storage)) {
-                Text(stringResource(R.string.storage_free, Storage.formatBytes(free), Storage.minutesLeft(context, "FHD")))
-                val total = Storage.totalBytes(context).coerceAtLeast(1)
-                LinearProgressIndicator(progress = { 1f - free.toFloat() / total }, Modifier.fillMaxWidth().padding(top = 6.dp))
-            }
+            Text(
+                stringResource(R.string.storage_free, Storage.formatBytes(Storage.freeBytes(context)), Storage.minutesLeft(context, "FHD")),
+                style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
             Spacer(Modifier.height(16.dp))
         }
     }

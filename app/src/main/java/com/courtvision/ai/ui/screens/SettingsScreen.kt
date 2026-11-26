@@ -17,6 +17,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -54,6 +55,7 @@ fun SettingsScreen(nav: NavHostController) {
     val st by app.settings.settings.collectAsState(initial = AppSettings())
     fun set(notify: Boolean = true, f: (AppSettings) -> AppSettings) = scope.launch { app.settings.update(f); if (notify) Feedback.show(context, R.string.setting_saved) }
     var backupVideos by remember { mutableStateOf(false) }
+    var advanced by remember { mutableStateOf(false) }
     var message by remember { mutableStateOf<String?>(null) }
     val exporter = remember { DataExporter(context) }
     val backupLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/zip")) { uri ->
@@ -90,11 +92,26 @@ fun SettingsScreen(nav: NavHostController) {
             }
         }
         item {
-            SectionCard(stringResource(R.string.processing)) {
+            SectionCard(stringResource(R.string.recording)) {
+                Text(stringResource(R.string.default_resolution))
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) { listOf("HD" to "720p", "FHD" to "1080p", "UHD" to "4K").forEach { (k, l) -> FilterChip(st.resolution == k, { set { it.copy(resolution = k) } }, { Text(l) }) } }
+                ToggleRow(stringResource(R.string.record_audio), st.recordAudio) { v -> set { it.copy(recordAudio = v) } }
+                ToggleRow(stringResource(R.string.voice), st.voiceCalls || st.voiceScore) { v -> set { it.copy(voiceCalls = v, voiceScore = v) } }
+            }
+        }
+        item {
+            SectionCard(stringResource(R.string.analysis_quality)) {
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     listOf(ProcessingMode.ECONOMY to R.string.proc_economy, ProcessingMode.BALANCED to R.string.proc_balanced, ProcessingMode.MAX_ACCURACY to R.string.proc_max).forEach { (m, l) -> FilterChip(st.processing == m, { set { it.copy(processing = m) } }, { Text(stringResource(l)) }) }
                 }
                 Text(stringResource(when (st.processing) { ProcessingMode.ECONOMY -> R.string.proc_economy_info; ProcessingMode.BALANCED -> R.string.proc_balanced_info; ProcessingMode.MAX_ACCURACY -> R.string.proc_max_info }), style = MaterialTheme.typography.labelSmall)
+            }
+        }
+        item {
+            TextButton(onClick = { advanced = !advanced }) { Text(stringResource(R.string.advanced) + if (advanced) " ▲" else " ▼") }
+        }
+        if (advanced) item {
+            SectionCard(stringResource(R.string.processing)) {
                 Text(stringResource(R.string.ball_color))
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     listOf(BallColor.OPTIC_YELLOW to R.string.ball_yellow, BallColor.ORANGE to R.string.ball_orange, BallColor.GREEN to R.string.ball_green).forEach { (c, l) -> FilterChip(st.ballColor == c, { set { it.copy(ballColor = c) } }, { Text(stringResource(l)) }) }
@@ -104,31 +121,26 @@ fun SettingsScreen(nav: NavHostController) {
                 Slider(st.reviewThreshold.toFloat(), { v -> set(false) { it.copy(reviewThreshold = v.toDouble()) } }, valueRange = 0.5f..0.99f, onValueChangeFinished = { Feedback.show(context, R.string.setting_saved) })
             }
         }
-        item {
+        if (advanced) item {
             SectionCard(stringResource(R.string.line_calling)) {
                 Text(stringResource(R.string.call_threshold, formatPct(st.callThreshold)))
                 Slider(st.callThreshold.toFloat(), { v -> set(false) { it.copy(callThreshold = v.toDouble()) } }, valueRange = 0.80f..0.995f, onValueChangeFinished = { Feedback.show(context, R.string.setting_saved) })
                 Text(stringResource(R.string.call_threshold_info), style = MaterialTheme.typography.labelSmall)
-                ToggleRow(stringResource(R.string.voice_calls), st.voiceCalls) { v -> set { it.copy(voiceCalls = v) } }
-                ToggleRow(stringResource(R.string.voice_score), st.voiceScore) { v -> set { it.copy(voiceScore = v) } }
                 ToggleRow(stringResource(R.string.live_analysis), st.liveAnalysis) { v -> set { it.copy(liveAnalysis = v) } }
             }
         }
-        item {
+        if (advanced) item {
             SectionCard(stringResource(R.string.recording)) {
-                Text(stringResource(R.string.default_resolution))
-                FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) { listOf("HD" to "720p", "FHD" to "1080p", "UHD" to "4K").forEach { (k, l) -> FilterChip(st.resolution == k, { set { it.copy(resolution = k) } }, { Text(l) }) } }
                 Text("FPS")
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) { listOf(30, 60).forEach { f -> FilterChip(st.fps == f, { set { it.copy(fps = f) } }, { Text("$f") }) } }
                 Text(stringResource(R.string.segment_length))
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) { listOf(5, 10, 15, 20).forEach { m -> FilterChip(st.segmentMinutes == m, { set { it.copy(segmentMinutes = m) } }, { Text("$m min") }) } }
                 Text(stringResource(R.string.countdown))
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) { listOf(0, 3, 5, 10).forEach { c -> FilterChip(st.countdownSec == c, { set { it.copy(countdownSec = c) } }, { Text("$c s") }) } }
-                ToggleRow(stringResource(R.string.record_audio), st.recordAudio) { v -> set { it.copy(recordAudio = v) } }
                 ToggleRow(stringResource(R.string.dim_screen), st.dimScreen) { v -> set { it.copy(dimScreen = v) } }
             }
         }
-        item {
+        if (advanced) item {
             SectionCard(stringResource(R.string.overlays)) {
                 ToggleRow(stringResource(R.string.tab_score), st.overlayScore) { v -> set { it.copy(overlayScore = v) } }
                 ToggleRow(stringResource(R.string.ov_speed), st.overlaySpeed) { v -> set { it.copy(overlaySpeed = v) } }

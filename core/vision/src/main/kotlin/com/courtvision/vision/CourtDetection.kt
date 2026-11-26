@@ -60,6 +60,61 @@ class CourtAutoDetector(private val court: CourtModel) {
         return Result(corners, support, cal)
     }
 
+    /**
+     * Fine automatic alignment: moves each corner (coordinate descent with a shrinking search
+     * window) to maximise the agreement between the projected court lines and the white-line mask.
+     * Works from a rough manual placement; corners may lie outside the image.
+     */
+    fun refine(corners: List<Vec2>, mask: BooleanArray, w: Int, h: Int, startRadius: Double = 12.0): Pair<List<Vec2>, Double> {
+        var best = corners.toMutableList()
+        fun score(c: List<Vec2>): Double {
+            val cal = CourtCalibration.fromCorners(court, c, w, h)
+            return if (cal.courtToImage == null) -1.0 else weightedSupport(cal, mask, w, h)
+        }
+        var bestScore = score(best)
+        var r = startRadius
+        while (r >= 0.5) {
+            var improved = true
+            var guard = 0
+            while (improved && guard++ < 6) {
+                improved = false
+                for (i in best.indices) {
+                    for (dy in -2..2) for (dx in -2..2) {
+                        if (dx == 0 && dy == 0) continue
+                        val cand = best.toMutableList()
+                        cand[i] = Vec2(best[i].x + dx * r / 2, best[i].y + dy * r / 2)
+                        val sc = score(cand)
+                        if (sc > bestScore + 1e-9) { bestScore = sc; best = cand; improved = true }
+                    }
+                }
+            }
+            r /= 2
+        }
+        return best to lineSupport(CourtCalibration.fromCorners(court, best, w, h), mask, w, h)
+    }
+
+    /** Like [lineSupport] but rewards exact hits more than near hits (smoother objective). */
+    private fun weightedSupport(cal: CourtCalibration, mask: BooleanArray, w: Int, h: Int): Double {
+        val toImg = cal.courtToImage ?: return 0.0
+        var acc = 0.0; var total = 0
+        for (line in court.lines()) {
+            if (line.name == "net") continue
+            for (s in 0..60) {
+                val p = toImg.map(line.a + (line.b - line.a) * (s / 60.0))
+                val x = p.x.toInt(); val y = p.y.toInt()
+                if (x < 3 || y < 3 || x >= w - 3 || y >= h - 3) continue
+                total++
+                if (mask[y * w + x]) { acc += 1.0; continue }
+                var near = 0.0
+                loop@ for (rad in 1..3) for (dy in -rad..rad) for (dx in -rad..rad) {
+                    if (mask[(y + dy) * w + x + dx]) { near = 1.0 - rad * 0.3; break@loop }
+                }
+                acc += near
+            }
+        }
+        return if (total < 20) 0.0 else acc / total
+    }
+
     /** Fraction of sampled court-line points that fall on (or 2 px near) the line mask. */
     fun lineSupport(cal: CourtCalibration, mask: BooleanArray, w: Int, h: Int): Double {
         val toImg = cal.courtToImage ?: return 0.0

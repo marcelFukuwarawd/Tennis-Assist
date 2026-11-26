@@ -17,6 +17,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -90,56 +91,69 @@ fun RecordScreen(nav: NavHostController, kind: String) {
         nav.navigate(Routes.camera(id))
     }
 
+    var more by rememberSaveable { mutableStateOf(false) }
+    val pickle = mode.isPickleball
     Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Text(stringResource(R.string.tab_record), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            FilterChip(!training, { training = false; mode = SessionMode.TENNIS_SINGLES }, { Text(stringResource(R.string.match)) })
-            FilterChip(training, { training = true; mode = SessionMode.TRAINING_SOLO }, { Text(stringResource(R.string.training)) })
-        }
-        // one-tap start with defaults: fewer steps to begin recording
-        Button(onClick = { start() }, Modifier.fillMaxWidth().height(64.dp)) { Text(stringResource(R.string.quick_start), style = MaterialTheme.typography.titleMedium) }
-        SectionCard(stringResource(R.string.mode)) {
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                (if (training) trainingModes else matchModes).forEach { m -> FilterChip(mode == m, { mode = m }, { Text(modeLabel(m)) }) }
+        Text(stringResource(if (training) R.string.new_training else R.string.new_match), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+        if (!training) {
+            SectionCard {
+                Text(stringResource(R.string.sport), style = MaterialTheme.typography.labelLarge)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    FilterChip(!pickle, { mode = if (mode.isDoubles) SessionMode.TENNIS_DOUBLES else SessionMode.TENNIS_SINGLES }, { Text(stringResource(R.string.filter_tennis)) })
+                    FilterChip(pickle, { mode = if (mode.isDoubles) SessionMode.PICKLEBALL_DOUBLES else SessionMode.PICKLEBALL_SINGLES }, { Text(stringResource(R.string.filter_pickleball)) })
+                }
+                Text(stringResource(R.string.format), style = MaterialTheme.typography.labelLarge)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    FilterChip(!mode.isDoubles, { mode = if (pickle) SessionMode.PICKLEBALL_SINGLES else SessionMode.TENNIS_SINGLES }, { Text(stringResource(R.string.singles)) })
+                    FilterChip(mode.isDoubles, { mode = if (pickle) SessionMode.PICKLEBALL_DOUBLES else SessionMode.TENNIS_DOUBLES }, { Text(stringResource(R.string.doubles)) })
+                }
+            }
+        } else {
+            SectionCard(stringResource(R.string.training_type)) {
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    trainingModes.forEach { m -> FilterChip(mode == m, { mode = m }, { Text(modeLabel(m)) }) }
+                }
             }
         }
         SectionCard(stringResource(R.string.players_optional)) {
-            Text(stringResource(R.string.players_hint), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             OutlinedTextField(a, { a = it }, label = { Text(stringResource(R.string.player_a)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
             if (mode.isDoubles) OutlinedTextField(a2, { a2 = it }, label = { Text(stringResource(R.string.player_a2)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
             if (!training || mode == SessionMode.TRAINING_PARTNER) {
                 OutlinedTextField(b, { b = it }, label = { Text(stringResource(R.string.player_b)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
                 if (mode.isDoubles) OutlinedTextField(b2, { b2 = it }, label = { Text(stringResource(R.string.player_b2)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
             }
-            Row(verticalAlignment = Alignment.CenterVertically) { Text(stringResource(R.string.left_handed), Modifier.weight(1f)); Switch(leftyA, { leftyA = it }) }
         }
-        if (mode.isMatch) SectionCard(stringResource(R.string.rules)) {
-            if (!mode.isPickleball) {
-                Text(stringResource(R.string.best_of))
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { listOf(1, 3, 5).forEach { n -> FilterChip(bestOf == n, { bestOf = n }, { Text("$n") }) } }
-                ToggleRow(stringResource(R.string.no_ad), noAd) { noAd = it }
-                ToggleRow(stringResource(R.string.match_tiebreak), matchTb) { matchTb = it }
-                ToggleRow(stringResource(R.string.short_sets), shortSets) { shortSets = it }
-            } else {
-                ToggleRow(stringResource(R.string.rally_scoring), pbRally) { pbRally = it }
-                Text(stringResource(R.string.points_to_win))
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { listOf(11, 15, 21).forEach { n -> FilterChip(pbPoints == n, { pbPoints = n }, { Text("$n") }) } }
-                Text(stringResource(R.string.games))
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { listOf(1, 3, 5).forEach { n -> FilterChip(pbGames == n, { pbGames = n }, { Text("$n") }) } }
+        Button(onClick = { start() }, Modifier.fillMaxWidth().height(68.dp)) { Text(stringResource(R.string.start_recording), style = MaterialTheme.typography.titleMedium) }
+        TextButton(onClick = { more = !more }) { Text(stringResource(if (more) R.string.fewer_options else R.string.more_options)) }
+        if (more) {
+            if (mode.isMatch) SectionCard(stringResource(R.string.rules)) {
+                if (!pickle) {
+                    Text(stringResource(R.string.best_of))
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { listOf(1, 3, 5).forEach { n -> FilterChip(bestOf == n, { bestOf = n }, { Text("$n") }) } }
+                    ToggleRow(stringResource(R.string.no_ad), noAd) { noAd = it }
+                    ToggleRow(stringResource(R.string.match_tiebreak), matchTb) { matchTb = it }
+                    ToggleRow(stringResource(R.string.short_sets), shortSets) { shortSets = it }
+                } else {
+                    ToggleRow(stringResource(R.string.rally_scoring), pbRally) { pbRally = it }
+                    Text(stringResource(R.string.points_to_win))
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { listOf(11, 15, 21).forEach { n -> FilterChip(pbPoints == n, { pbPoints = n }, { Text("$n") }) } }
+                    Text(stringResource(R.string.games))
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) { listOf(1, 3, 5).forEach { n -> FilterChip(pbGames == n, { pbGames = n }, { Text("$n") }) } }
+                }
+                Text(stringResource(R.string.first_server))
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    FilterChip(firstA, { firstA = true }, { Text(a.ifBlank { "A" }) })
+                    FilterChip(!firstA, { firstA = false }, { Text(b.ifBlank { "B" }) })
+                }
             }
-            Text(stringResource(R.string.first_server))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                FilterChip(firstA, { firstA = true }, { Text(a.ifBlank { "A" }) })
-                FilterChip(!firstA, { firstA = false }, { Text(b.ifBlank { "B" }) })
+            SectionCard(stringResource(R.string.surface)) {
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    listOf("clay" to R.string.surface_clay, "hard" to R.string.surface_hard, "grass" to R.string.surface_grass, "synthetic" to R.string.surface_synthetic, "indoor" to R.string.surface_indoor)
+                        .forEach { (k, l) -> FilterChip(surface == k, { surface = k }, { Text(stringResource(l)) }) }
+                }
+                ToggleRow(stringResource(R.string.left_handed), leftyA) { leftyA = it }
             }
         }
-        SectionCard(stringResource(R.string.surface)) {
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                listOf("clay" to R.string.surface_clay, "hard" to R.string.surface_hard, "grass" to R.string.surface_grass, "synthetic" to R.string.surface_synthetic, "indoor" to R.string.surface_indoor)
-                    .forEach { (k, l) -> FilterChip(surface == k, { surface = k }, { Text(stringResource(l)) }) }
-            }
-        }
-        Button(onClick = { start() }, Modifier.fillMaxWidth().height(64.dp)) { Text(stringResource(R.string.open_camera), style = MaterialTheme.typography.titleMedium) }
         Spacer(Modifier.height(24.dp))
     }
 }

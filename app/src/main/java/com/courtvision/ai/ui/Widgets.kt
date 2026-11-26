@@ -23,6 +23,15 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.clipRect
+import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
@@ -88,58 +97,181 @@ fun VideoSurface(player: ExoPlayer, modifier: Modifier = Modifier, aspect: Float
     }
 }
 
-/**
- * Draggable 4-corner editor over a frame (far-left, far-right, near-right, near-left).
- * Corners are normalised 0..1. The projected court model is drawn so the user can check alignment.
- */
+/** Hides the status and navigation bars while the composable is on screen (swipe to reveal). */
 @Composable
-fun CornerEditor(frame: Bitmap, court: CourtModel, corners: List<Vec2>, onChange: (List<Vec2>) -> Unit, modifier: Modifier = Modifier) {
-    var size by remember { mutableStateOf(IntSize.Zero) }
-    var dragging by remember { mutableIntStateOf(-1) }
-    val aspect = frame.width / frame.height.toFloat()
-    Box(modifier.fillMaxWidth().aspectRatio(aspect).onSizeChanged { size = it }) {
-        Image(frame.asImageBitmap(), null, Modifier.fillMaxSize(), contentScale = ContentScale.FillBounds)
-        Canvas(
-            Modifier.fillMaxSize().pointerInput(corners) {
-                detectDragGestures(
-                    onDragStart = { o ->
-                        dragging = corners.indices.minByOrNull { i ->
-                            val c = Offset((corners[i].x * size.width).toFloat(), (corners[i].y * size.height).toFloat())
-                            (c - o).getDistance()
-                        } ?: -1
-                    },
-                    onDragEnd = { dragging = -1 },
-                    onDrag = { change, amount ->
-                        change.consume()
-                        if (dragging >= 0 && size.width > 0) {
-                            val c = corners[dragging]
-                            val n = Vec2(
-                                (c.x + amount.x / size.width).coerceIn(0.0, 1.0),
-                                (c.y + amount.y / size.height).coerceIn(0.0, 1.0),
-                            )
-                            onChange(corners.toMutableList().also { it[dragging] = n })
-                        }
-                    },
-                )
-            },
-        ) {
-            val w = this.size.width; val h = this.size.height
-            val pts = corners.map { Offset((it.x * w).toFloat(), (it.y * h).toFloat()) }
-            // projected court lines with the current hypothesis
-            val cal = CourtCalibration.fromCorners(court, corners.map { Vec2(it.x * w, it.y * h) }, w.toInt(), h.toInt())
-            val inv = cal.courtToImage
-            if (inv != null) for (l in court.lines()) {
-                val a = inv.map(l.a); val b = inv.map(l.b)
-                if (a.x.isFinite() && b.x.isFinite()) drawLine(Lime.copy(alpha = 0.8f), Offset(a.x.toFloat(), a.y.toFloat()), Offset(b.x.toFloat(), b.y.toFloat()), 2.dp.toPx())
-            }
-            val path = Path().apply { pts.forEachIndexed { i, p -> if (i == 0) moveTo(p.x, p.y) else lineTo(p.x, p.y) }; close() }
-            drawPath(path, Color.White.copy(alpha = 0.6f), style = Stroke(1.dp.toPx()))
-            pts.forEachIndexed { i, p ->
-                drawCircle(if (i == dragging) Color.Yellow else Lime, 14.dp.toPx(), p, style = Stroke(3.dp.toPx()))
-                drawCircle(Color.Black.copy(alpha = 0.4f), 4.dp.toPx(), p)
-            }
+fun ImmersiveMode(landscape: Boolean = false) {
+    val view = androidx.compose.ui.platform.LocalView.current
+    val activity = view.context as? android.app.Activity
+    DisposableEffect(Unit) {
+        val window = activity?.window
+        val ctrl = window?.let { androidx.core.view.WindowCompat.getInsetsController(it, view) }
+        ctrl?.systemBarsBehavior = androidx.core.view.WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+        ctrl?.hide(androidx.core.view.WindowInsetsCompat.Type.systemBars())
+        val oldOrientation = activity?.requestedOrientation
+        if (landscape) activity?.requestedOrientation = android.content.pm.ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+        onDispose {
+            ctrl?.show(androidx.core.view.WindowInsetsCompat.Type.systemBars())
+            if (landscape) activity?.requestedOrientation = oldOrientation ?: android.content.pm.ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
         }
     }
+}
+
+/** Extra space around the frame so corners outside the picture can still be placed. */
+private const val EDIT_MARGIN = 0.12f
+
+/**
+ * Court calibration editor (4 corners: 1 far-left, 2 far-right, 3 near-right, 4 near-left):
+ * - drag a corner directly, or drag ANYWHERE else to move the selected corner slowly
+ *   (fine "touchpad" mode, the finger never covers the point);
+ * - a 3x magnifier follows the selected corner;
+ * - the projected court model is drawn live so the user sees the alignment;
+ * - corners may be placed outside the picture (useful when the near corners are cut off).
+ * Corners are normalised image coordinates.
+ */
+@Composable
+fun CornerEditor(
+    frame: Bitmap,
+    court: CourtModel,
+    corners: List<Vec2>,
+    onChange: (List<Vec2>) -> Unit,
+    selected: Int,
+    onSelect: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    var size by remember { mutableStateOf(IntSize.Zero) }
+    var fineDrag by remember { mutableStateOf(false) }
+    var dragging by remember { mutableStateOf(false) }
+    val image = remember(frame) { frame.asImageBitmap() }
+    val latest = androidx.compose.runtime.rememberUpdatedState(corners)
+    val latestSel = androidx.compose.runtime.rememberUpdatedState(selected)
+    val aspect = frame.width / frame.height.toFloat()
+    Box(modifier.aspectRatio(aspect).onSizeChanged { size = it }) {
+        Canvas(
+            Modifier.fillMaxSize()
+                .pointerInput(Unit) {
+                    detectTapGestures { o ->
+                        val c = latest.value
+                        val idx = c.indices.minByOrNull { (toCanvas(c[it], size) - o).getDistance() } ?: return@detectTapGestures
+                        onSelect(idx)
+                    }
+                }
+                .pointerInput(Unit) {
+                    detectDragGestures(
+                        onDragStart = { o ->
+                            val c = latest.value
+                            val near = c.indices.minByOrNull { (toCanvas(c[it], size) - o).getDistance() }
+                            fineDrag = near == null || (toCanvas(c[near], size) - o).getDistance() > 48.dp.toPx()
+                            if (!fineDrag && near != null) onSelect(near)
+                            dragging = true
+                        },
+                        onDragEnd = { dragging = false },
+                        onDragCancel = { dragging = false },
+                        onDrag = { change, amount ->
+                            change.consume()
+                            if (size.width == 0) return@detectDragGestures
+                            val k = if (fineDrag) 0.25f else 1f
+                            val scaleX = (1 + 2 * EDIT_MARGIN) / size.width
+                            val scaleY = (1 + 2 * EDIT_MARGIN) / size.height
+                            val c = latest.value
+                            val i = latestSel.value
+                            val n = Vec2(
+                                (c[i].x + amount.x * k * scaleX).coerceIn(-EDIT_MARGIN.toDouble(), 1.0 + EDIT_MARGIN),
+                                (c[i].y + amount.y * k * scaleY).coerceIn(-EDIT_MARGIN.toDouble(), 1.0 + EDIT_MARGIN),
+                            )
+                            onChange(c.toMutableList().also { it[i] = n })
+                        },
+                    )
+                },
+        ) {
+            val w = this.size.width; val h = this.size.height
+            val imgTl = toCanvas(Vec2(0.0, 0.0), size); val imgBr = toCanvas(Vec2(1.0, 1.0), size)
+            drawRect(Color(0xFF1A1A1A))
+            drawImage(image, dstOffset = IntOffset(imgTl.x.toInt(), imgTl.y.toInt()), dstSize = IntSize((imgBr.x - imgTl.x).toInt(), (imgBr.y - imgTl.y).toInt()))
+            val segs = courtSegments(court, corners, frame.width, frame.height).map { (a, b) -> toCanvas(a, size) to toCanvas(b, size) }
+            segs.forEach { (a, b) -> drawLine(Lime.copy(alpha = 0.85f), a, b, 2.dp.toPx()) }
+            val pts = corners.map { toCanvas(it, size) }
+            pts.forEachIndexed { i, p ->
+                val sel = i == selected
+                drawCircle(if (sel) Color.Yellow else Color.White, if (sel) 16.dp.toPx() else 12.dp.toPx(), p, style = Stroke(3.dp.toPx()))
+                drawLine(Color.Black, Offset(p.x - 6.dp.toPx(), p.y), Offset(p.x + 6.dp.toPx(), p.y), 1.dp.toPx())
+                drawLine(Color.Black, Offset(p.x, p.y - 6.dp.toPx()), Offset(p.x, p.y + 6.dp.toPx()), 1.dp.toPx())
+                drawContext.canvas.nativeCanvas.drawText(
+                    "${i + 1}", p.x + 14.dp.toPx(), p.y - 14.dp.toPx(),
+                    android.graphics.Paint().apply { color = android.graphics.Color.YELLOW; textSize = 18.dp.toPx(); isFakeBoldText = true; setShadowLayer(4f, 0f, 0f, android.graphics.Color.BLACK) },
+                )
+            }
+            // magnifier on the selected corner, placed on the opposite side of the screen
+            val sp = pts[selected]
+            val box = minOf(w, h) * 0.42f
+            val left = if (sp.x < w / 2) w - box - 8.dp.toPx() else 8.dp.toPx()
+            val top = 8.dp.toPx()
+            val zoom = 3f
+            val center = Offset(left + box / 2, top + box / 2)
+            fun mag(p: Offset) = center + (p - sp) * zoom
+            drawRect(Color.Black, Offset(left, top), Size(box, box))
+            clipRect(left, top, left + box, top + box) {
+                val tl = mag(imgTl); val br = mag(imgBr)
+                drawImage(image, dstOffset = IntOffset(tl.x.toInt(), tl.y.toInt()), dstSize = IntSize((br.x - tl.x).toInt(), (br.y - tl.y).toInt()))
+                segs.forEach { (a, b) -> drawLine(Lime, mag(a), mag(b), 1.5.dp.toPx()) }
+                drawLine(Color.Yellow, Offset(center.x - box / 2, center.y), Offset(center.x + box / 2, center.y), 1f)
+                drawLine(Color.Yellow, Offset(center.x, center.y - box / 2), Offset(center.x, center.y + box / 2), 1f)
+            }
+            drawRect(Color.Yellow, Offset(left, top), Size(box, box), style = Stroke(2.dp.toPx()))
+        }
+    }
+}
+
+private fun toCanvas(p: Vec2, size: IntSize): Offset {
+    val k = 1 + 2 * EDIT_MARGIN
+    return Offset(((p.x + EDIT_MARGIN) / k * size.width).toFloat(), ((p.y + EDIT_MARGIN) / k * size.height).toFloat())
+}
+
+/** Court lines projected into normalised image coordinates for the current corner hypothesis. */
+private fun courtSegments(court: CourtModel, corners: List<Vec2>, w: Int, h: Int): List<Pair<Vec2, Vec2>> {
+    val cal = CourtCalibration.fromCorners(court, corners.map { Vec2(it.x * w, it.y * h) }, w, h)
+    val inv = cal.courtToImage ?: return emptyList()
+    return court.lines().mapNotNull { l ->
+        val a = inv.map(l.a); val b = inv.map(l.b)
+        if (!a.x.isFinite() || !b.x.isFinite()) null else Vec2(a.x / w, a.y / h) to Vec2(b.x / w, b.y / h)
+    }
+}
+
+/** Corner selector + 1-pixel nudge arrows for the calibration editor. */
+@kotlin.OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+@Composable
+fun CornerControls(corners: List<Vec2>, frameWidth: Int, selected: Int, onSelect: (Int) -> Unit, onChange: (List<Vec2>) -> Unit) {
+    val names = listOf(
+        androidx.compose.ui.res.stringResource(com.courtvision.ai.R.string.corner_1), androidx.compose.ui.res.stringResource(com.courtvision.ai.R.string.corner_2),
+        androidx.compose.ui.res.stringResource(com.courtvision.ai.R.string.corner_3), androidx.compose.ui.res.stringResource(com.courtvision.ai.R.string.corner_4),
+    )
+    fun nudge(dx: Int, dy: Int) {
+        val step = 1.0 / frameWidth
+        onChange(corners.toMutableList().also { it[selected] = Vec2(it[selected].x + dx * step, it[selected].y + dy * step) })
+    }
+    androidx.compose.foundation.layout.Column {
+        androidx.compose.foundation.layout.FlowRow(horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(4.dp)) {
+            names.forEachIndexed { i, n -> androidx.compose.material3.FilterChip(selected == i, { onSelect(i) }, { androidx.compose.material3.Text("${i + 1}. $n") }) }
+        }
+        androidx.compose.foundation.layout.Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+            androidx.compose.material3.FilledTonalIconButton(onClick = { nudge(-1, 0) }) { androidx.compose.material3.Icon(androidx.compose.material.icons.Icons.AutoMirrored.Filled.KeyboardArrowLeft, null) }
+            androidx.compose.foundation.layout.Column {
+                androidx.compose.material3.FilledTonalIconButton(onClick = { nudge(0, -1) }) { androidx.compose.material3.Icon(androidx.compose.material.icons.Icons.Filled.KeyboardArrowUp, null) }
+                androidx.compose.material3.FilledTonalIconButton(onClick = { nudge(0, 1) }) { androidx.compose.material3.Icon(androidx.compose.material.icons.Icons.Filled.KeyboardArrowDown, null) }
+            }
+            androidx.compose.material3.FilledTonalIconButton(onClick = { nudge(1, 0) }) { androidx.compose.material3.Icon(androidx.compose.material.icons.Icons.AutoMirrored.Filled.KeyboardArrowRight, null) }
+        }
+    }
+}
+
+/** Runs automatic detection + fine alignment on a frame; returns normalised corners and line agreement. */
+fun autoCalibrate(frame: Bitmap, court: CourtModel, start: List<Vec2>?): Pair<List<Vec2>, Double>? {
+    val w = frame.width; val h = frame.height
+    val px = IntArray(w * h); frame.getPixels(px, 0, w, 0, 0, w, h)
+    val det = com.courtvision.vision.CourtAutoDetector(court)
+    val mask = det.lineMask(px, w, h)
+    val initial = start?.map { Vec2(it.x * w, it.y * h) } ?: det.detect(px, w, h)?.corners ?: return null
+    val (refined, support) = det.refine(initial, mask, w, h)
+    return refined.map { Vec2(it.x / w, it.y / h) } to support
 }
 
 /** Default corner guess: a centred trapezoid typical of a camera behind the baseline. */

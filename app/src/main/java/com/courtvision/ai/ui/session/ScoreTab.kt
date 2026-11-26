@@ -51,6 +51,7 @@ import com.courtvision.ai.util.formatDuration
 import com.courtvision.ai.util.formatPct
 import com.courtvision.scoring.Side
 
+private val quickReasons = listOf("WINNER", "UNFORCED_ERROR", "FORCED_ERROR", "ACE", "DOUBLE_FAULT")
 private val reasons = listOf("UNKNOWN", "WINNER", "ACE", "DOUBLE_FAULT", "FORCED_ERROR", "UNFORCED_ERROR", "OUT", "NET", "DOUBLE_BOUNCE")
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -97,15 +98,24 @@ fun ScoreTab(vm: SessionViewModel) {
         val indexed = points.withIndex().reversed().filter { !onlyReview || it.value.needsReview }
         itemsIndexed(indexed.toList(), key = { _, it -> it.value.id }) { _, iv ->
             val p = iv.value; val i = iv.index
-            Row(Modifier.fillMaxWidth().clickable { editing = i }.padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
-                Text("#${i + 1}", Modifier.width(44.dp), style = MaterialTheme.typography.labelMedium)
-                Column(Modifier.weight(1f)) {
-                    Text(if (p.winnerA) session.nameA() else session.nameB(), fontWeight = FontWeight.SemiBold)
-                    Text(reasonLabel(p.reason) + (p.serveNumber?.let { " · " + stringResource(if (it == 1) R.string.first_serve else R.string.second_serve) } ?: ""), style = MaterialTheme.typography.labelMedium)
+            Column(Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
+                Row(Modifier.fillMaxWidth().clickable { editing = i }, verticalAlignment = Alignment.CenterVertically) {
+                    Text("#${i + 1}", Modifier.width(44.dp), style = MaterialTheme.typography.labelMedium)
+                    Text(if (p.winnerA) session.nameA() else session.nameB(), Modifier.weight(1f), fontWeight = FontWeight.SemiBold)
+                    if (p.auto) Pill(stringResource(R.string.auto) + " " + formatPct(p.confidence), MaterialTheme.colorScheme.secondary)
+                    if (p.needsReview) Pill(stringResource(R.string.review), Unsure)
+                    Text(labels.getOrElse(i) { "" }, Modifier.padding(start = 8.dp), fontWeight = FontWeight.Bold)
                 }
-                if (p.auto) Pill(stringResource(R.string.auto) + " " + formatPct(p.confidence), MaterialTheme.colorScheme.secondary)
-                if (p.needsReview) Pill(stringResource(R.string.review), Unsure)
-                Text(labels.getOrElse(i) { "" }, Modifier.padding(start = 8.dp), fontWeight = FontWeight.Bold)
+                // one tap to say how the point ended (feeds winners / errors / aces / double faults)
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    quickReasons.forEach { r ->
+                        FilterChip(
+                            p.reason == r,
+                            { vm.edit { l -> l.toMutableList().also { it[i] = p.copy(reason = if (p.reason == r) "UNKNOWN" else r, needsReview = false) } } },
+                            { Text(reasonLabel(r), style = MaterialTheme.typography.labelSmall) },
+                        )
+                    }
+                }
             }
         }
     }
@@ -151,7 +161,7 @@ fun ScoreTab(vm: SessionViewModel) {
 }
 
 @Composable
-private fun ScoreLine(name: String, sets: List<Int>, current: String) {
+fun ScoreLine(name: String, sets: List<Int>, current: String) {
     Row(Modifier.fillMaxWidth().padding(vertical = 2.dp), verticalAlignment = Alignment.CenterVertically) {
         Text(name, Modifier.weight(1f), fontSize = 20.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
         sets.forEach { Text("$it", Modifier.width(28.dp), fontSize = 20.sp) }

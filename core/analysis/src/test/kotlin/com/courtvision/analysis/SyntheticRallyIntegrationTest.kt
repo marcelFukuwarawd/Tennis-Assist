@@ -197,6 +197,12 @@ class SyntheticRallyIntegrationTest {
         val err = res!!.corners.indices.map { res.corners[it].distanceTo(truthCorners[it]) }
         println("SYNTHETIC-COURT corner_errors_px=${err.joinToString { "%.1f".format(it) }} line_support=${"%.2f".format(res.lineSupport)}")
         assertTrue("corner errors $err", err.all { it < 12 })
+        // a rough manual placement (up to ~10 px off) is pulled onto the lines by the fine adjustment
+        val rough = truthCorners.mapIndexed { i, c -> Vec2(c.x + listOf(9.0, -8.0, 7.0, -10.0)[i], c.y + listOf(-7.0, 8.0, 9.0, 6.0)[i]) }
+        val (refined, support) = det.refine(rough, det.lineMask(bg, w, h), w, h)
+        val refErr = refined.indices.map { refined[it].distanceTo(truthCorners[it]) }
+        println("SYNTHETIC-COURT refine rough_errors_px=${rough.indices.map { "%.1f".format(rough[it].distanceTo(truthCorners[it])) }} refined_errors_px=${refErr.joinToString { "%.1f".format(it) }} support=${"%.2f".format(support)}")
+        assertTrue("refined errors $refErr", refErr.all { it < 3.5 })
         assertTrue(res.lineSupport > 0.5)
     }
 }

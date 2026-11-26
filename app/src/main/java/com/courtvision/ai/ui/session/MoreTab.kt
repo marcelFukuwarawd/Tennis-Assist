@@ -59,6 +59,8 @@ fun MoreTab(vm: SessionViewModel, nav: NavHostController) {
             SectionCard(stringResource(R.string.tools)) {
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Button(onClick = { nav.navigate(Routes.calibrate(session.id)) }) { Text(stringResource(R.string.calibrate_court)) }
+                    FilledTonalButton(onClick = { nav.navigate(Routes.map(session.id)) }) { Text(stringResource(R.string.tab_map)) }
+                    FilledTonalButton(onClick = { nav.navigate(Routes.coach(session.id)) }) { Text(stringResource(R.string.tab_coach)) }
                     FilledTonalButton(onClick = { nav.navigate(Routes.editor(session.id)) }) { Text(stringResource(R.string.video_editor)) }
                     FilledTonalButton(onClick = { nav.navigate(Routes.biomech(session.id)) }) { Text(stringResource(R.string.biomechanics)) }
                 }

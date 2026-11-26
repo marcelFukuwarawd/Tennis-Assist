@@ -136,7 +136,11 @@ class CameraController(private val context: Context) {
     ) {
         val p = provider()
         p.unbindAll()
-        val preview = Preview.Builder().build().also { it.surfaceProvider = previewView.surfaceProvider }
+        // same 16:9 aspect for preview, video and analysis so the court guide drawn on the preview
+        // matches what is recorded and analysed
+        val preview = Preview.Builder()
+            .setResolutionSelector(ResolutionSelector.Builder().setAspectRatioStrategy(AspectRatioStrategy.RATIO_16_9_FALLBACK_AUTO_STRATEGY).build())
+            .build().also { it.surfaceProvider = previewView.surfaceProvider }
         val recorder = Recorder.Builder()
             .setQualitySelector(QualitySelector.from(quality, FallbackStrategy.lowerQualityOrHigherThan(quality)))
             .build()

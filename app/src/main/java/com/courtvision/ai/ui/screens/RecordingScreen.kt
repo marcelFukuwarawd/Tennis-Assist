@@ -100,6 +100,18 @@ import com.courtvision.ai.data.scoringSession
 import com.courtvision.ai.data.toScoringEvents
 import com.courtvision.ai.processing.AnalysisScheduler
 import com.courtvision.ai.ui.ImmersiveMode
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.material.icons.automirrored.filled.MenuOpen
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.GridOff
+import androidx.compose.material.icons.filled.GridOn
+import com.courtvision.ai.ui.CornerControls
+import com.courtvision.ai.ui.CornerEditor
+import com.courtvision.ai.ui.CourtGuideOverlay
+import com.courtvision.ai.ui.autoCalibrate
+import com.courtvision.ai.util.formatPct
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import com.courtvision.ai.ui.InGreen
 import com.courtvision.ai.ui.Lime
 import com.courtvision.ai.ui.OutRed
@@ -176,7 +188,14 @@ fun RecordingScreen(nav: NavHostController, sessionId: Long) {
     var pitch by remember { mutableStateOf<Double?>(null) }
     var thermal by remember { mutableIntStateOf(PowerManager.THERMAL_STATUS_NONE) }
     var lastCall by remember { mutableStateOf<Pair<String, Color>?>(null) }
-    var calibFrame by remember { mutableStateOf<Bitmap?>(null) }
+    var calibrating by remember { mutableStateOf(false) }
+    var showGuide by remember { mutableStateOf(true) }
+    var calibPanel by remember { mutableStateOf(true) }
+    var liveFrame by remember { mutableStateOf<Bitmap?>(null) }
+    var selCorner by remember { mutableIntStateOf(0) }
+    var calibSupport by remember { mutableStateOf<Double?>(null) }
+    var calibBusy by remember { mutableStateOf(false) }
+    var calibFailed by remember { mutableStateOf(false) }
     var corners by remember { mutableStateOf(defaultCorners) }
     var bindError by remember { mutableStateOf(false) }
     val redo = remember { mutableStateListOf<PointEntity>() }
@@ -338,8 +357,23 @@ fun RecordingScreen(nav: NavHostController, sessionId: Long) {
         })
         else Text(stringResource(R.string.camera_permission_needed), Modifier.align(Alignment.Center), color = Color.White)
 
+        // ---- court guide / live calibration, aligned with the 16:9 preview picture ----
+        val previewAspect = liveFrame?.let { it.width / it.height.toFloat() } ?: (16f / 9f)
+        if (court != null) Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            if (calibrating) {
+                CornerEditor(
+                    liveFrame, court, corners, { corners = it; calibSupport = null }, selCorner, { selCorner = it },
+                    Modifier, showImage = false, aspectRatio = previewAspect,
+                )
+            } else if (showGuide) {
+                session?.calibration()?.let { d ->
+                    CourtGuideOverlay(court, d.xs.indices.map { Vec2(d.xs[it], d.ys[it]) }, aspectRatio = previewAspect)
+                }
+            }
+        }
+
         // ---- top status bar ----
-        Column(Modifier.align(Alignment.TopStart).padding(12.dp)) {
+        if (!calibrating) Column(Modifier.align(Alignment.TopStart).padding(12.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 if (recording) Icon(Icons.Filled.FiberManualRecord, null, tint = OutRed)
                 Text(formatDuration(segmentBase + elapsed), color = Color.White, fontWeight = FontWeight.Bold)
@@ -371,10 +405,14 @@ fun RecordingScreen(nav: NavHostController, sessionId: Long) {
         if (countdown > 0) Text("$countdown", Modifier.align(Alignment.Center), color = Lime, fontSize = 96.sp, fontWeight = FontWeight.Black)
 
         // ---- right controls ----
-        Column(Modifier.align(Alignment.CenterEnd).padding(12.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(16.dp)) {
-            IconButton(onClick = { if (!recording) showSettings = true }) { Icon(Icons.Filled.Tune, null, tint = Color.White) }
-            IconButton(onClick = { analyzer?.latestFrame?.let { calibFrame = it; corners = session?.calibration()?.let { d -> d.xs.indices.map { i -> Vec2(d.xs[i], d.ys[i]) } } ?: defaultCorners } }) {
-                Icon(Icons.Filled.CropFree, null, tint = Color.White)
+        if (!calibrating) Column(Modifier.align(Alignment.CenterEnd).padding(12.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            IconButton(onClick = { if (!recording) showSettings = true }) { Icon(Icons.Filled.Tune, stringResource(R.string.camera_settings), tint = Color.White) }
+            IconButton(onClick = {
+                corners = session?.calibration()?.let { d -> d.xs.indices.map { i -> Vec2(d.xs[i], d.ys[i]) } } ?: defaultCorners
+                calibSupport = null; calibFailed = false; calibrating = true
+            }) { Icon(Icons.Filled.CropFree, stringResource(R.string.calibrate_court), tint = Color.White) }
+            if (session?.calibration() != null) IconButton(onClick = { showGuide = !showGuide }) {
+                Icon(if (showGuide) Icons.Filled.GridOn else Icons.Filled.GridOff, stringResource(R.string.court_guide), tint = if (showGuide) Lime else Color.White)
             }
             Box(
                 Modifier.size(84.dp).background(if (recording) Color.White else OutRed, CircleShape).pointerInput(recording) {
@@ -387,7 +425,7 @@ fun RecordingScreen(nav: NavHostController, sessionId: Long) {
 
         // ---- scoreboard with big buttons ----
         val s = session
-        if (s != null && s.mode.isMatch) {
+        if (s != null && s.mode.isMatch && !calibrating) {
             val board = s.scoringSession().board(points.toScoringEvents())
             Row(Modifier.align(Alignment.BottomCenter).padding(8.dp).background(Color.Black.copy(alpha = 0.5f), MaterialTheme.shapes.large).padding(6.dp), verticalAlignment = Alignment.CenterVertically) {
                 Button(onClick = { addPoint(Side.A) }, Modifier.height(64.dp).width(130.dp)) { Text("+ " + s.nameA(), maxLines = 1) }
@@ -424,23 +462,48 @@ fun RecordingScreen(nav: NavHostController, sessionId: Long) {
             }
         }
 
-        // ---- calibration overlay (full screen) ----
-        val frame = calibFrame
-        if (frame != null && court != null) {
-            CalibrationLayout(
-                frame = frame, court = court, corners = corners, onChange = { corners = it },
-                onSave = { support ->
+        // ---- live calibration panel (on top of the live camera) ----
+        if (calibrating && court != null) {
+            LaunchedEffect(Unit) { while (true) { analyzer?.latestFrame?.let { liveFrame = it }; delay(400) } }
+            fun auto(useCurrent: Boolean) {
+                val f = liveFrame ?: analyzer?.latestFrame ?: return
+                scope.launch {
+                    calibBusy = true; calibFailed = false
+                    val r = withContext(Dispatchers.Default) { autoCalibrate(f, court, if (useCurrent) corners else null) }
+                    if (r == null) calibFailed = true else { corners = r.first; calibSupport = r.second }
+                    calibBusy = false
+                }
+            }
+            if (calibPanel) Column(
+                Modifier.align(Alignment.CenterEnd).width(230.dp).fillMaxHeight().background(Color(0xDD101312)).verticalScroll(rememberScrollState()).padding(10.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(stringResource(R.string.calibrate_court), Modifier.weight(1f), color = Color.White, style = MaterialTheme.typography.titleSmall)
+                    IconButton(onClick = { calibPanel = false }) { Icon(Icons.Filled.Close, stringResource(R.string.hide_panel), tint = Color.White) }
+                }
+                Text(stringResource(R.string.calib_help_live), color = Color.White.copy(alpha = 0.8f), style = MaterialTheme.typography.labelSmall)
+                CornerControls(corners, liveFrame?.width ?: 640, selCorner, { selCorner = it }, { corners = it; calibSupport = null })
+                if (analyzer?.latestFrame != null || liveFrame != null) {
+                    FilledTonalButton(onClick = { auto(false) }, enabled = !calibBusy, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.auto_detect)) }
+                    FilledTonalButton(onClick = { auto(true) }, enabled = !calibBusy, modifier = Modifier.fillMaxWidth()) { Text(stringResource(if (calibBusy) R.string.working else R.string.fine_adjust)) }
+                }
+                if (calibFailed) Text(stringResource(R.string.auto_failed), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.labelSmall)
+                calibSupport?.let { Text(stringResource(R.string.line_support, formatPct(it)), color = if (it >= 0.5) Lime else MaterialTheme.colorScheme.error, style = MaterialTheme.typography.labelMedium) }
+                Button(onClick = {
                     scope.launch {
-                        val data = CalibrationData(corners.map { it.x }, corners.map { it.y }, auto = false, lineSupport = support)
+                        val data = CalibrationData(corners.map { it.x }, corners.map { it.y }, auto = false, lineSupport = calibSupport)
                         app.db.sessions().setCalibration(sessionId, AppJson.encodeToString(CalibrationData.serializer(), data))
                         analyzer?.calibration = data
                         Feedback.show(context)
-                        calibFrame = null
+                        calibrating = false; showGuide = true
                     }
-                },
-                onCancel = { calibFrame = null },
-                saveLabel = stringResource(R.string.save),
-            )
+                }, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.save)) }
+                TextButton(onClick = { calibrating = false }, modifier = Modifier.fillMaxWidth()) { Text(stringResource(R.string.cancel)) }
+            } else IconButton(
+                onClick = { calibPanel = true },
+                modifier = Modifier.align(Alignment.TopEnd).padding(8.dp).background(Color.Black.copy(alpha = 0.6f), MaterialTheme.shapes.small),
+            ) { Icon(Icons.AutoMirrored.Filled.MenuOpen, stringResource(R.string.show_panel), tint = Color.White) }
         }
 
         // ---- touch lock: long press to unlock ----

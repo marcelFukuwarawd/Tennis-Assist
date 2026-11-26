@@ -130,21 +130,27 @@ private const val EDIT_MARGIN = 0.12f
  */
 @Composable
 fun CornerEditor(
-    frame: Bitmap,
+    frame: Bitmap?,
     court: CourtModel,
     corners: List<Vec2>,
     onChange: (List<Vec2>) -> Unit,
     selected: Int,
     onSelect: (Int) -> Unit,
     modifier: Modifier = Modifier,
+    /** false = transparent editor drawn over the live camera preview (no picture, no outer margin). */
+    showImage: Boolean = true,
+    aspectRatio: Float = frame?.let { it.width / it.height.toFloat() } ?: (16f / 9f),
 ) {
     var size by remember { mutableStateOf(IntSize.Zero) }
     var fineDrag by remember { mutableStateOf(false) }
     var dragging by remember { mutableStateOf(false) }
-    val image = remember(frame) { frame.asImageBitmap() }
+    val image = remember(frame) { frame?.asImageBitmap() }
     val latest = androidx.compose.runtime.rememberUpdatedState(corners)
     val latestSel = androidx.compose.runtime.rememberUpdatedState(selected)
-    val aspect = frame.width / frame.height.toFloat()
+    val margin = if (showImage) EDIT_MARGIN else 0f
+    val aspect = aspectRatio
+    val fw = frame?.width ?: 1280; val fh = frame?.height ?: 720
+    fun toCanvas(p: Vec2, size: IntSize) = toCanvas(p, size, margin)
     Box(modifier.aspectRatio(aspect).onSizeChanged { size = it }) {
         Canvas(
             Modifier.fillMaxSize()
@@ -170,8 +176,8 @@ fun CornerEditor(
                             change.consume()
                             if (size.width == 0) return@detectDragGestures
                             val k = if (fineDrag) 0.25f else 1f
-                            val scaleX = (1 + 2 * EDIT_MARGIN) / size.width
-                            val scaleY = (1 + 2 * EDIT_MARGIN) / size.height
+                            val scaleX = (1 + 2 * margin) / size.width
+                            val scaleY = (1 + 2 * margin) / size.height
                             val c = latest.value
                             val i = latestSel.value
                             val n = Vec2(
@@ -185,9 +191,11 @@ fun CornerEditor(
         ) {
             val w = this.size.width; val h = this.size.height
             val imgTl = toCanvas(Vec2(0.0, 0.0), size); val imgBr = toCanvas(Vec2(1.0, 1.0), size)
-            drawRect(Color(0xFF1A1A1A))
-            drawImage(image, dstOffset = IntOffset(imgTl.x.toInt(), imgTl.y.toInt()), dstSize = IntSize((imgBr.x - imgTl.x).toInt(), (imgBr.y - imgTl.y).toInt()))
-            val segs = courtSegments(court, corners, frame.width, frame.height).map { (a, b) -> toCanvas(a, size) to toCanvas(b, size) }
+            if (showImage) {
+                drawRect(Color(0xFF1A1A1A))
+                if (image != null) drawImage(image, dstOffset = IntOffset(imgTl.x.toInt(), imgTl.y.toInt()), dstSize = IntSize((imgBr.x - imgTl.x).toInt(), (imgBr.y - imgTl.y).toInt()))
+            }
+            val segs = courtSegments(court, corners, fw, fh).map { (a, b) -> toCanvas(a, size) to toCanvas(b, size) }
             segs.forEach { (a, b) -> drawLine(Lime.copy(alpha = 0.85f), a, b, 2.dp.toPx()) }
             val pts = corners.map { toCanvas(it, size) }
             pts.forEachIndexed { i, p ->
@@ -208,22 +216,33 @@ fun CornerEditor(
             val zoom = 3f
             val center = Offset(left + box / 2, top + box / 2)
             fun mag(p: Offset) = center + (p - sp) * zoom
-            drawRect(Color.Black, Offset(left, top), Size(box, box))
-            clipRect(left, top, left + box, top + box) {
+            if (image != null) drawRect(Color.Black, Offset(left, top), Size(box, box))
+            if (image != null) clipRect(left, top, left + box, top + box) {
                 val tl = mag(imgTl); val br = mag(imgBr)
                 drawImage(image, dstOffset = IntOffset(tl.x.toInt(), tl.y.toInt()), dstSize = IntSize((br.x - tl.x).toInt(), (br.y - tl.y).toInt()))
                 segs.forEach { (a, b) -> drawLine(Lime, mag(a), mag(b), 1.5.dp.toPx()) }
                 drawLine(Color.Yellow, Offset(center.x - box / 2, center.y), Offset(center.x + box / 2, center.y), 1f)
                 drawLine(Color.Yellow, Offset(center.x, center.y - box / 2), Offset(center.x, center.y + box / 2), 1f)
             }
-            drawRect(Color.Yellow, Offset(left, top), Size(box, box), style = Stroke(2.dp.toPx()))
+            if (image != null) drawRect(Color.Yellow, Offset(left, top), Size(box, box), style = Stroke(2.dp.toPx()))
         }
     }
 }
 
-private fun toCanvas(p: Vec2, size: IntSize): Offset {
-    val k = 1 + 2 * EDIT_MARGIN
-    return Offset(((p.x + EDIT_MARGIN) / k * size.width).toFloat(), ((p.y + EDIT_MARGIN) / k * size.height).toFloat())
+private fun toCanvas(p: Vec2, size: IntSize, margin: Float = EDIT_MARGIN): Offset {
+    val k = 1 + 2 * margin
+    return Offset(((p.x + margin) / k * size.width).toFloat(), ((p.y + margin) / k * size.height).toFloat())
+}
+
+/** Court guide (projected court lines) drawn over the live camera preview. */
+@Composable
+fun CourtGuideOverlay(court: CourtModel, corners: List<Vec2>, modifier: Modifier = Modifier, aspectRatio: Float = 16f / 9f) {
+    Canvas(modifier.aspectRatio(aspectRatio)) {
+        val sz = IntSize(size.width.toInt(), size.height.toInt())
+        courtSegments(court, corners, 1280, (1280 / aspectRatio).toInt()).forEach { (a, b) ->
+            drawLine(Lime.copy(alpha = 0.75f), toCanvas(a, sz, 0f), toCanvas(b, sz, 0f), 2.dp.toPx())
+        }
+    }
 }
 
 /** Court lines projected into normalised image coordinates for the current corner hypothesis. */

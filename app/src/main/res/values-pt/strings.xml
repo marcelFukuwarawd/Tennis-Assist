@@ -452,4 +452,7 @@
     <string name="advanced">Avançado</string>
     <string name="voice">Avisos por voz (placar e chamadas de linha)</string>
     <string name="analysis_quality">Qualidade da análise</string>
+    <string name="calib_help_live">Arraste os círculos numerados até os cantos EXTERNOS da quadra vista pela câmera. Arrastar em outro lugar move devagar, com precisão. Depois toque em “Ajuste fino automático”. A guia verde fica na tela depois de salvar.</string>
+    <string name="court_guide">Mostrar / esconder guia da quadra</string>
+    <string name="camera_settings">Configurações da câmera</string>
 </resources>

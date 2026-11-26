@@ -14,6 +14,10 @@ Simplification and usability (feedback from the first test on a phone).
 - Fixed: analysis crashed on some phones (MediaPipe int8 detector on GPU) – detector now runs on CPU,
   and analysis continues with classical vision if a model fails.
 - "Saved" confirmation messages.
+- Calibration directly on the recording screen, over the LIVE camera picture (button on the side
+  menu), with magnifier, arrows and automatic fine adjustment; the green court guide stays drawn over
+  the camera (toggle) so the framing can be checked while recording. Preview forced to 16:9 so the
+  guide matches the recorded video and the analysis stream.
 
 ## 0.1.0 – 2026-11-25
 First version.

@@ -451,3 +451,6 @@ training_type	Training type	Tipo de treino
 advanced	Advanced	Avançado
 voice	Voice announcements (score and line calls)	Avisos por voz (placar e chamadas de linha)
 analysis_quality	Analysis quality	Qualidade da análise
+calib_help_live	Drag the numbered circles onto the OUTER corners of the court seen by the camera. Drag elsewhere for slow, precise movement. Then tap “Fine auto-adjust”. The green guide stays on screen after saving.	Arraste os círculos numerados até os cantos EXTERNOS da quadra vista pela câmera. Arrastar em outro lugar move devagar, com precisão. Depois toque em “Ajuste fino automático”. A guia verde fica na tela depois de salvar.
+court_guide	Show / hide court guide	Mostrar / esconder guia da quadra
+camera_settings	Camera settings	Configurações da câmera

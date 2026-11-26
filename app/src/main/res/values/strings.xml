@@ -453,4 +453,7 @@
     <string name="advanced">Advanced</string>
     <string name="voice">Voice announcements (score and line calls)</string>
     <string name="analysis_quality">Analysis quality</string>
+    <string name="calib_help_live">Drag the numbered circles onto the OUTER corners of the court seen by the camera. Drag elsewhere for slow, precise movement. Then tap “Fine auto-adjust”. The green guide stays on screen after saving.</string>
+    <string name="court_guide">Show / hide court guide</string>
+    <string name="camera_settings">Camera settings</string>
 </resources>
